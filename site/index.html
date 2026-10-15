@@ -107,9 +107,8 @@ main { position: relative; min-width: 0; min-height: 0; background: var(--sea); 
 .status { right: 14px; top: 12px; font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); text-align: right; background: color-mix(in srgb, var(--paper) 85%, transparent); padding: 5px 9px; border-radius: 4px; max-width: 55%; }
 .status b { color: var(--ink); font-weight: 500; }
 .status.err { background: var(--err-bg); color: var(--err-fg); font-family: var(--f-body); font-size: 14px; text-align: left; pointer-events: auto; }
-.busy::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 1s infinite; }
-@keyframes pulse { 50% { opacity: .2 } }
-@media (prefers-reduced-motion: reduce) { .busy::before { animation: none; } }
+.arbusy { display: inline-block; width: 30px; height: 13px; vertical-align: -2px; margin-right: 7px; overflow: visible; }
+.arbusy .ar0 { stop-color: var(--ar); stop-opacity: .25; } .arbusy .ar1 { stop-color: var(--ar); }
 .mapbtns { position: absolute; left: 14px; top: 12px; display: flex; gap: 6px; z-index: 5; }
 .mapbtns button { font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper) 92%, transparent); color: var(--ink); padding: 5px 10px; border-radius: 6px; cursor: pointer; }
 .mapbtns button.done { border-color: var(--accent); color: var(--accent); }
@@ -702,7 +701,29 @@ async function highwayHistory() {   // highways of successive windows, as in the
   for (const key of ["nh", "sh"]) { const pts = out.filter(d => isFinite(d[key])); out[key + "Trend"] = olsTrend(pts.map(d => d.mid), pts.map(d => d[key])); }
   return out;
 }
-function setStatusText(t, busy) { const st = $("status"); st.className = "overlay status" + (busy ? " busy" : ""); st.textContent = t; }
+/* busy indicator: a small AR filament that waves in place (a travelling wave along its body, no translation) */
+const AR_BUSY = (() => {
+  const N = 22, f2 = v => v.toFixed(2);
+  const frame = ph => { const C = [], Wd = [];
+    for (let k = 0; k <= N; k++) { const t = k / N, x = 2 + 25 * t;
+      const y = 6.5 - 1.2 * Math.sin(Math.PI * t) + (.25 + 2.3 * Math.pow(1 - t, 1.3)) * Math.sin(2 * Math.PI * .8 * t - ph);   // the tail swings most, the head stays steady
+      C.push([x, y]); Wd.push(.3 + 3.9 * Math.pow(t, 1.3) * (1 - .5 * Math.pow(t, 10))); }   // thin tail, fattest just behind the head
+    const L = [], R = [];
+    for (let i = 0; i <= N; i++) { const a = C[Math.max(0, i - 1)], b = C[Math.min(N, i + 1)]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const m = Math.hypot(nx, ny);
+      nx /= m; ny /= m; const h = Wd[i] / 2; L.push([C[i][0] + nx * h, C[i][1] + ny * h]); R.push([C[i][0] - nx * h, C[i][1] - ny * h]); }
+    const hd = C[N], a0 = Math.atan2(L[N][1] - hd[1], L[N][0] - hd[0]), r = Wd[N] / 2, cap = [];
+    for (let j = 1; j < 8; j++) { const a = a0 - Math.PI * j / 8; cap.push([hd[0] + r * Math.cos(a), hd[1] + r * Math.sin(a)]); }   // rounded head
+    return "M" + [...L, ...cap, ...R.reverse()].map(p => f2(p[0]) + "," + f2(p[1])).join("L") + "Z"; };
+  const svg = `<svg class="arbusy" viewBox="0 0 32 13" aria-hidden="true"><defs><linearGradient id="arbusy-g" x1="0" x2="1"><stop offset="0" class="ar0"/><stop offset=".55" class="ar1"/></linearGradient></defs>
+    <path fill="url(#arbusy-g)" d="${frame(0)}"/></svg>`;
+  const still = matchMedia("(prefers-reduced-motion: reduce)"); let running = false;
+  const tick = now => { const el = document.querySelector("#status.busy .arbusy path"); if (!el || still.matches) { running = false; return; }
+    el.setAttribute("d", frame(2 * Math.PI * (now / 1300 % 1))); requestAnimationFrame(tick); };
+  return { svg, start() { if (!running && !still.matches) { running = true; requestAnimationFrame(tick); } } }; })();
+function setStatusText(t, busy) { const st = $("status"); st.className = "overlay status" + (busy ? " busy" : "");
+  if (!busy) { st.textContent = t; return; }
+  let tx = st.querySelector(".bt"); if (!tx) { st.innerHTML = AR_BUSY.svg + '<span class="bt"></span>'; tx = st.querySelector(".bt"); }   // keep the same SVG so the wave runs on
+  tx.textContent = t; AR_BUSY.start(); }
 function setStatus() {
   const st = $("status"); st.className = "overlay status";
   const secs = lastMs < 1000 ? lastMs.toFixed(0) + " ms" : (lastMs / 1000).toFixed(1) + " s";
