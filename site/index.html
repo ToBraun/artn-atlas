@@ -101,8 +101,9 @@ main { position: relative; min-width: 0; min-height: 0; background: var(--sea); 
 .roads i { display: block; height: 0; border-radius: 3px; }
 .ivtbar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .ivtbar i { height: 12px; border-radius: 2px; }
-.wkey { display: grid; grid-template-columns: 46px 1fr; gap: 3px 10px; align-items: center; font-size: 13px; margin-top: 8px; color: var(--muted); }
-.wkey i { display: block; border-top-style: solid; border-top-color: var(--ink); }
+.wkey { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 12px; font-size: 13px; margin-top: 7px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wkey span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.wkey i { display: inline-block; width: 24px; border-top-style: solid; border-top-color: var(--ink); }
 .status { right: 14px; top: 12px; font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); text-align: right; background: color-mix(in srgb, var(--paper) 85%, transparent); padding: 5px 9px; border-radius: 4px; max-width: 55%; }
 .status b { color: var(--ink); font-weight: 500; }
 .status.err { background: var(--err-bg); color: var(--err-fg); font-family: var(--f-body); font-size: 14px; text-align: left; pointer-events: auto; }
@@ -111,6 +112,7 @@ main { position: relative; min-width: 0; min-height: 0; background: var(--sea); 
 @media (prefers-reduced-motion: reduce) { .busy::before { animation: none; } }
 .mapbtns { position: absolute; left: 14px; top: 12px; display: flex; gap: 6px; z-index: 5; }
 .mapbtns button { font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper) 92%, transparent); color: var(--ink); padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+.mapbtns button.done { border-color: var(--accent); color: var(--accent); }
 .mapbtns button:disabled { color: var(--muted); opacity: .55; cursor: not-allowed; }
 .mapbtns svg { width: 15px; height: 15px; fill: currentColor; }
 #cmpview { position: absolute; inset: 0; z-index: 10; background: var(--sea); display: grid; grid-template-rows: auto 1fr 1fr; }
@@ -153,10 +155,20 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
   nav.tabs { margin-left: 0; width: 100%; order: 3; } nav.tabs button { flex: 1; padding: 6px 4px; }
   .brand { flex: 1 1 0; } .brand svg { height: 32px; } .brand h1 { font-size: 16px; } .tag { display: none; } .info { margin-top: 0; } .themebtn span { display: none; }
   main > .legend { position: static; min-width: 0; max-width: none; margin: 0 8px 8px; padding: 7px 10px; background: var(--paper); }
-  #cmpview .legend { min-width: 0; left: 8px; bottom: 6px; padding: 5px 8px; }
-  #cmpview { grid-template-rows: auto auto auto; overflow-y: auto; } #cmpview figure { aspect-ratio: 1.55; } .legend .lbl { font-size: 13px; margin-bottom: 3px; }
-  .roads { grid-template-columns: 26px 1fr; font-size: 12.5px; gap: 2px 6px; } .legend img.ramp, .ivtbar i { height: 8px; } .legend .ticks { font-size: 12px; }
-  .status { font-size: 12px; right: 6px; top: 6px; max-width: 60%; } .status .sub { display: none; } .mapbtns { left: 6px; top: 6px; } .mapbtns span { display: none; }
+  main > .legend { padding: 6px 9px; margin: 0 8px 6px; }
+  .legend .lbl { font-size: 13px; margin-bottom: 3px; } .legend img.ramp, .ivtbar i { height: 7px; } .legend .ticks { font-size: 11.5px; margin-top: 2px; }
+  .legend .credit { font-size: 11px; margin-top: 2px; } .wkey { font-size: 12px; margin-top: 4px; gap: 2px 9px; } .wkey i { width: 18px; }
+  .roads { grid-template-columns: 20px auto 20px auto; justify-content: start; gap: 3px 6px; font-size: 12.5px; } .roads span { margin-right: 10px; }
+  .status { font-size: 12px; right: 6px; top: 6px; max-width: 60%; padding: 3px 7px; } .status .sub, .status .sub2 { display: none; } .mapbtns { left: 6px; top: 6px; } .mapbtns span { display: none; }
+  .mapbtns button { padding: 4px 8px; }
+  /* compare on phones: full-screen sheet, the two maps stacked with their legends underneath */
+  #cmpview { position: fixed; inset: 0; z-index: 40; display: block; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #cmpview .bar { position: sticky; top: 0; z-index: 2; background: var(--paper); padding: max(8px, env(safe-area-inset-top, 0px)) 10px 8px; flex-wrap: wrap; font-size: 13.5px; }
+  #cmpview .bar button { padding: 4px 8px; font-size: 13px; }
+  #cmpview figure { border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+  #cmpview figure img.snap { position: static; display: block; width: 100%; height: auto; }
+  #cmpview figcaption { position: static; max-width: none; text-align: left; background: none; padding: 4px 10px 2px; font-size: 12.5px; }
+  #cmpview .legend { position: static; transform: none; min-width: 0; max-width: none; margin: 4px 8px 0; padding: 6px 9px; }
 }
 </style>
 
@@ -696,7 +708,7 @@ function setStatus() {
   const secs = lastMs < 1000 ? lastMs.toFixed(0) + " ms" : (lastMs / 1000).toFixed(1) + " s";
   const k = S.view === "highways" ? (HIST ? HIST[0].k : G.ebcK) : 0; const samp = k ? ` · betweenness sampled from ${k} sources` : "";
   st.innerHTML = HIST ? `<b>${HIST.length}</b> windows of ${S.hlen} years<span class="sub"><br>computed in ${secs}${samp}</span>` :
-    `<b>${G.nAR.toLocaleString("en")}</b> ARs · <b>${G.n.toLocaleString("en")}</b> nodes · <b>${G.E.toLocaleString("en")}</b> edges<span class="sub"><br>computed in ${secs}${samp}</span>`;
+    `<span class="sub2"><b>${G.nAR.toLocaleString("en")}</b> ARs · <b>${G.n.toLocaleString("en")}</b> nodes · </span><b>${G.E.toLocaleString("en")}</b> edges<span class="sub"><br>computed in ${secs}${samp}</span>`;
   const sparse = G.nAR > 0 && G.n < .3 * G.visited, eh = $("epshint"); eh.hidden = !sparse;
   if (sparse) eh.textContent = `Only ${Math.round(100 * G.n / G.visited)}% of the cells ARs pass through have an edge at this threshold${S.res === 3 ? ". At res 3 the cells are small, so each cell pair is visited rarely" : ""}. Try a lower ε${S.res === 3 ? ", for example 0.3" : ""}.`;
 }
@@ -754,10 +766,10 @@ function drawNetworkDiff(P) {
   const steps = NETHIST.slice(-Math.min(4, n)).map(h => h.y0 + "–" + h.y1);
   $("legend").innerHTML = `<span class="lbl">Edges gained and lost, last ${Math.min(3, n - 1)} step${n > 2 ? "s" : ""}</span><div class="roads">
     <i style="border-top:3px solid ${gain}"></i><span>Gained</span><i style="border-top:3px solid ${loss}"></i><span>Lost</span></div>
-    <p class="credit">Newest step solid, older steps fainter: ${steps.join(" → ")}</p>`;
+    <p class="credit">Newest step solid, older fainter: ${steps[0]} → ${steps[steps.length - 1]}</p>`;
 }
 function widthKey(WF, unit) { const vs = [.1, .5, 1].map(x => x * WF.vmax);
-  $("legend").insertAdjacentHTML("beforeend", `<div class="wkey">${vs.map(v => `<i style="border-top-width:${WF.f(v).toFixed(2)}px"></i><span>${fmt(v)} ${unit}</span>`).join("")}</div>`); }
+  $("legend").insertAdjacentHTML("beforeend", `<div class="wkey"><span>Width:</span>${vs.map(v => `<span><i style="border-top-width:${WF.f(v).toFixed(2)}px"></i>${fmt(v)}</span>`).join("")}<span>${unit}</span></div>`); }
 
 /* Hubs view */
 function hubValues(Gx, PRx) { const v = new Map();
@@ -783,7 +795,7 @@ function drawHubs() {
   const placed = []; ctx.font = `600 13px ${css("--f-body")}`; ctx.lineJoin = "round";
   rank.forEach(([c], r) => { const p = proj([g.lon[c], g.lat[c]]); if (placed.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 22)) return; placed.push(p);
     ctx.lineWidth = 3.5; ctx.strokeStyle = css("--paper"); ctx.strokeText(String(r + 1), p[0] + 7, p[1] - 7); ctx.fillStyle = css("--ink"); ctx.fillText(String(r + 1), p[0] + 7, p[1] - 7); });
-  G._top = rank; G._unit = S.metric === "ivtnode" ? UNIT_IVT_TXT : unit;
+  G._vals = vals; G._top = rank; G._unit = S.metric === "ivtnode" ? UNIT_IVT_TXT : unit;
 }
 
 /* Road types view */
@@ -844,7 +856,7 @@ function legendIVT(title) { const t = IVTTHR, P = PAL(), C = P.ivtClass;
 function legendRoads() { $("legend").innerHTML = `<span class="lbl">Road types by edge betweenness</span><div class="roads">
   <i style="border-top:5px solid ${css("--motorway")};outline:1px solid ${css("--road-casing")}"></i><span>Highway: top ${S.motor}%</span>
   <i style="border-top:3px solid ${css("--primary")};outline:1px solid ${css("--road-casing")}"></i><span>Main road: top ${S.prim}%</span>
-  ${S.minor ? `<i style="border-top:1px solid ${css("--minor")}"></i><span>Minor road: all other edges</span>` : ""}</div>`; }
+  ${S.minor ? `<i style="border-top:1px solid ${css("--minor")}"></i><span>Minor road</span>` : ""}</div>`; }
 function legendCompare() { const [a, b] = cmpLabels(); $("legend").innerHTML = `<span class="lbl">Highways and main roads compared</span><div class="roads">
   <i style="border-top:4px solid ${css("--cmpA")}"></i><span>${a} (${G.epsC} ARs threshold)</span>
   <i style="border-top:4px solid ${css("--cmpB")}"></i><span>${b} (${GB.epsC} ARs threshold)</span></div>`; }
@@ -898,8 +910,13 @@ let SNAP = null;
 function viewText() { const v = { network: "Network", hubs: "Hubs · " + METRIC[S.metric][0], highways: "Highways", basins: "Basins" }[S.view];
   const c = S.view === "highways" && S.hwmode === "compare" ? cmpLabels().join(" vs ") : condText(condA());
   return { title: v + (S.show === "change" && (S.view === "network" || S.view === "hubs") ? " · change A − B" : ""), detail: `${c} · ${S.loc} · H3 res ${S.res}` }; }
-function snapshot() { ctx.putImageData(base, 0, 0); return { img: canvas.toDataURL("image/png"), legend: $("legend").innerHTML, ...viewText() }; }
-$("capture").onclick = () => { if (!base) return; SNAP = snapshot(); $("compare").disabled = false; const s = $("capture").querySelector("span"); s.textContent = "Captured"; setTimeout(() => s.textContent = "Capture map", 1400); };
+function snapshot() { ctx.putImageData(base, 0, 0);   // crop to the globe so the copy carries no empty margins
+  const [[x0, y0], [x1, y1]] = path.bounds({ type: "Sphere" }), pad = 4, sx = Math.max(0, (x0 - pad) * DPR), sy = Math.max(0, (y0 - pad) * DPR);
+  const w = Math.min(canvas.width - sx, (x1 - x0 + 2 * pad) * DPR), h = Math.min(canvas.height - sy, (y1 - y0 + 2 * pad) * DPR);
+  const c = document.createElement("canvas"); c.width = Math.round(w); c.height = Math.round(h); c.getContext("2d").drawImage(canvas, sx, sy, w, h, 0, 0, c.width, c.height);
+  return { img: c.toDataURL("image/png"), legend: $("legend").innerHTML, ...viewText() }; }
+$("capture").onclick = () => { if (!base) return; SNAP = snapshot(); $("compare").disabled = false; const b = $("capture"), s = b.querySelector("span"); s.textContent = "Captured"; b.classList.add("done");
+  setTimeout(() => { s.textContent = "Capture map"; b.classList.remove("done"); }, 1400); };
 $("compare").onclick = () => { if (!SNAP || !base) return; const now = snapshot(); const v = $("cmpview");
   const fig = (s, tag) => `<figure><img class="snap" alt="${tag} map" src="${s.img}"><figcaption><b>${tag}</b> · ${s.title}<br>${s.detail}</figcaption><div class="overlay legend">${s.legend}</div></figure>`;
   v.innerHTML = `<div class="bar"><span>Captured map above, current map below</span><span><button id="cmpswap">Keep current as captured</button> <button id="cmpclose">Close</button></span></div>${fig(SNAP, "Captured")}${fig(now, "Current")}`;
@@ -976,10 +993,18 @@ async function step() { if (!playing) return; if (S.y1 >= Y1) { setPlaying(false
   S.y0++; S.y1++; y0el.value = S.y0; y1el.value = S.y1; drawHist(); await compute(); playTimer = setTimeout(step, 300); }
 function cellAt(x, y) { if (!G) return -1; const p0 = proj.invert([x, y]); if (!p0 || !isFinite(p0[0])) return -1; const p = proj(p0); if (Math.hypot(p[0] - x, p[1] - y) > 1) return -1;
   return G.g.idx.get(h3.latLngToCell(p0[1], p0[0], S.res)) ?? -1; }
+const TOUCH = matchMedia("(hover: none)").matches; let tipTimer;
+function touchText(c, i) {   // phones: only the value the current view is about
+  if (S.view === "basins") return BAS && BAS.lab[c] ? "Basin " + BAS.lab[c] : "";
+  if (S.view === "hubs" && i !== undefined && G._vals) { const v = G._vals.get(c); return isFinite(v) ? fmt(v) + " " + G._unit : ""; }
+  return "";
+}
 canvas.addEventListener("mousemove", ev => { const r = canvas.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top, c = cellAt(x, y); const tip = $("tip");
   if (c < 0 || !base) { tip.hidden = true; return; } ctx.putImageData(base, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); drawSelection(); strokeHex(G.g, c, css("--ink"), 1.5);
-  const i = G.nodeOf.get(c); let txt = ll(G.g, c);
-  if (i !== undefined) txt += ` · ${fmt((G.sin[i] + G.sout[i]) / G.ndec)} ARs/decade` + (BAS && BAS.lab[c] ? ` · basin ${BAS.lab[c]}` : ""); else txt += " · no edges";
+  const i = G.nodeOf.get(c); let txt;
+  if (TOUCH) { txt = touchText(c, i); if (!txt) { tip.hidden = true; return; } clearTimeout(tipTimer); tipTimer = setTimeout(() => { tip.hidden = true; }, 2500); }
+  else { txt = ll(G.g, c);
+    if (i !== undefined) txt += ` · ${fmt((G.sin[i] + G.sout[i]) / G.ndec)} ARs/decade` + (BAS && BAS.lab[c] ? ` · basin ${BAS.lab[c]}` : ""); else txt += " · no edges"; }
   tip.textContent = txt; tip.style.left = x + "px"; tip.style.top = y + "px"; tip.hidden = false;
   const tw = tip.offsetWidth; tip.style.transform = x + 12 + tw > W - 6 ? `translate(${-tw - 12}px, -50%)` : ""; });   // flip left near the right edge
 canvas.addEventListener("mouseleave", () => { $("tip").hidden = true; if (base) ctx.putImageData(base, 0, 0); });
