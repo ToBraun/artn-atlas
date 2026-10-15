@@ -1,6 +1,9 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta charset="utf-8">
 <title>ARTN Atlas</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -38,7 +41,8 @@
   --accent: #7fa8ea; --road-casing: #05080c; --motorway: #5b8fe6; --primary: #5fb37a; --minor: #56636f;
   --cmpA: #b48ce0; --cmpB: #5fc28a; --gain: #6fa8ff; --loss: #ff7b6b; --hub: #ffb02e; --ar: #ffb02e; --tag-bg: #1b2a40; --tag-fg: #9fc0f2; --err-bg: #3d1a17; --err-fg: #f5b3ab; color-scheme: dark }
 
-html, body { height: 100%; }
+[hidden] { display: none !important; }   /* author display rules (grid, flex) must not override the hidden attribute */
+html, body { height: 100%; margin: 0; }
 body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.35; }
 .app { height: 100%; display: grid; grid-template-columns: 320px minmax(0,1fr); grid-template-rows: auto minmax(0,1fr) auto; }
 header { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
@@ -153,6 +157,8 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
 }
 </style>
 
+</head>
+<body>
 <div class="app">
   <header>
     <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ARTN logo: an atmospheric river on a branching network of AR highways and roads on the globe">
@@ -167,9 +173,9 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
   <circle cx="32" cy="32" r="30" fill="none" class="lg-ink" stroke-width="1.5"/></svg><h1>The global atmospheric river transport network</h1></div>
     <span class="tag" id="datatag">Loading catalog…</span>
     <nav class="tabs" role="tablist" aria-label="View">
-      <button role="tab" id="tab-network" data-view="network" aria-selected="false">Network</button>
+      <button role="tab" id="tab-network" data-view="network" aria-selected="true">Network</button>
       <button role="tab" id="tab-hubs" data-view="hubs" aria-selected="false">Hubs</button>
-      <button role="tab" id="tab-highways" data-view="highways" aria-selected="true">Highways</button>
+      <button role="tab" id="tab-highways" data-view="highways" aria-selected="false">Highways</button>
       <button role="tab" id="tab-basins" data-view="basins" aria-selected="false">Basins</button>
     </nav>
     <button class="themebtn" id="theme" aria-label="Colour theme"><svg viewBox="0 0 16 16"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5v11a5.5 5.5 0 0 1 0-11z"/></svg><span id="themelbl">System</span></button>
@@ -370,7 +376,7 @@ const BASINPAL = cmRGB.batlowS.map(([r, g, b]) => `rgb(${r},${g},${b})`).filter(
 const basinColor = b => BASINPAL[(b * 7) % BASINPAL.length];
 
 /* ---------- state ---------- */
-const S = { view: "highways", y0: 1940, y1: 2023, seasons: new Set(["DJF", "MAM", "JJA", "SON"]), eps: 2, thrule: "match", alpha: 0.9, loc: "centroid", res: 2,
+const S = { view: "network", y0: 1940, y1: 2023, seasons: new Set(["DJF", "MAM", "JJA", "SON"]), eps: 2, thrule: "match", alpha: 0.9, loc: "centroid", res: 2,
   show: "values", b0: 1940, b1: 1979, metric: "strength", tophubs: 12, netcol: "weight", netw: "weight", wscale: "linear", wmax: 3, diffmode: false,
   hwmode: "roads", cmptype: "windows", c0: 1940, c1: 1979, motor: 4, prim: 15, minor: true, ebcmode: "auto", hlen: 20, hstep: 10,
   minsize: 15, trials: 5, seed: 38, upstream: true, regime: "", phase: 0, selNode: -1, selBasin: -1 };
@@ -988,3 +994,6 @@ new MutationObserver(() => { drawHist(); draw(); }).observe(document.documentEle
   window.__ready = true;
 })();
 </script>
+
+</body>
+</html>
