@@ -16,6 +16,9 @@ site/
     regimes.json      monthly ENSO / NAO / blocking phases
   data_v10/           PIKART v1.0 (1940–2023), as used in Braun et al. (2026); same files
                       choose it in the Catalog menu or open index.html?catalog=data_v10
+  data_merra2/        PIKART v1.0 on MERRA-2 (1980–2018, centroids only), thinned from 3-hourly to 6-hourly (00/06/12/18 UTC)
+                      so a time step means the same as in ERA5; 2019 is left out because the catalogue stops in September
+  data_target/        tARget v4.0 on ERA5 (1940–2023), centroid and head
 tools/
   pikart_v11_to_hex.py  turns the yearly PIKART V1.1 Lagrangian NetCDF files into PIKART_V1.1_ERA5_hex.pkl and the slim .npz (run on the HPC)
   prep_web_data.py    builds site/data from PIKART_hex.pkl (or the slim .npz)
@@ -60,6 +63,7 @@ With a season or regime filter the app by default picks the AR count threshold w
 ## Credits and licence
 
 - Method: Braun et al. (2026), Earth Syst. Dynam. 17, 695–716, https://doi.org/10.5194/esd-17-695-2026
+- Data: tARget v4.0, Guan and Waliser (2015), https://doi.org/10.1002/2015JD024257
 - Data: PIKART v1.1 and v1.0, Vallejo-Bernal et al. (2025), https://doi.org/10.1029/2024JD041869
 - Colour maps: Crameri, F., Shephard, G. E. and Heron, P. J. (2020), The misuse of colour in science communication, Nat. Commun. 11, 5444, https://www.fabiocrameri.ch/colourmaps/
 - Code: MIT licence (see LICENSE). Derived data in `site/data`: CC BY 4.0.

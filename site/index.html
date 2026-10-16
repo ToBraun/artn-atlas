@@ -315,7 +315,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
 
     <section class="info" id="info" aria-live="polite"></section>
     <p class="cite">Method: Braun et al. (2026), <a href="https://doi.org/10.5194/esd-17-695-2026" target="_blank" rel="noopener">Earth Syst. Dynam. 17, 695–716</a>.<br>
-      Data: PIKART v1.1 (1940–2025) and v1.0 (1940–2023, as in the paper), <a href="https://doi.org/10.1029/2024JD041869" target="_blank" rel="noopener">Vallejo-Bernal et al. (2025)</a>.<br>
+      Data: PIKART v1.1 and v1.0 (ERA5, MERRA-2), <a href="https://doi.org/10.1029/2024JD041869" target="_blank" rel="noopener">Vallejo-Bernal et al. (2025)</a>; tARget v4.0, <a href="https://doi.org/10.1002/2015JD024257" target="_blank" rel="noopener">Guan and Waliser (2015)</a>.<br>
       Code: MIT licence. Derived data: CC BY 4.0.</p>
   </aside>
 
@@ -407,7 +407,8 @@ const S = { view: "network", y0: 1940, y1: 2023, seasons: new Set(["DJF", "MAM",
   hwmode: "roads", cmptype: "windows", c0: 1940, c1: 1979, motor: 4, prim: 15, minor: true, ebcmode: "auto", hlen: 20, hstep: 10,
   minsize: 15, trials: 5, seed: 38, upstream: true, regime: "", phase: 0, selNode: -1, selBasin: -1 };
 const PHASECH = { "-1": "-", "0": "0", "1": "+" };
-const CATALOGS = [{ dir: "data", label: "PIKART v1.1 · ERA5 · 1940–2025" }, { dir: "data_v10", label: "PIKART v1.0 · ERA5 · 1940–2023 (paper)" }];
+const CATALOGS = [{ dir: "data", label: "PIKART v1.1 · ERA5 · 1940–2025" }, { dir: "data_v10", label: "PIKART v1.0 · ERA5 · 1940–2023 (paper)" },
+  { dir: "data_merra2", label: "PIKART v1.0 · MERRA-2 · 1980–2018" }, { dir: "data_target", label: "tARget v4.0 · ERA5 · 1940–2023" }];
 let DATADIR = CATALOGS[0].dir;
 let META, Y0, Y1, NMON, OFF, MON, IVT, NTR, NPT, IVTTHR, land, trackStartYr, REG = null;
 const GRID = {}, CELLS = {};
@@ -427,6 +428,9 @@ async function loadBase() {
   Y0 = META.y0; Y1 = META.y1; NMON = (Y1 - Y0 + 1) * 12; S.y0 = Y0; S.y1 = Y1;
   for (const id of ["y0", "y1"]) { $(id).min = Y0; $(id).max = Y1; } $("y0").value = Y0; $("y1").value = Y1;
   $("datatag").textContent = META.label + " · " + Y0 + "–" + Y1;
+  const locs = META.locators || ["centroid", "head"];   // e.g. PIKART MERRA-2 has centroids only
+  for (const o of $("locator").options) { o.disabled = !locs.includes(o.value); o.textContent = o.value[0].toUpperCase() + o.value.slice(1) + (o.disabled ? " (not in catalog)" : ""); }
+  if (!locs.includes(S.loc)) S.loc = locs[0]; $("locator").value = S.loc;
   let IVTraw; [OFF, MON, IVTraw] = await Promise.all([getBin(META.tracks, Uint32Array), getBin(META.month, Uint16Array), getBin(META.ivt, Uint16Array)]);
   const sc = META.ivt_scale || 1; IVT = sc === 1 ? IVTraw : Float32Array.from(IVTraw, v => v / sc);   // IVT is stored in steps of 1/ivt_scale kg m-1 s-1
   NTR = OFF.length - 1; NPT = MON.length;

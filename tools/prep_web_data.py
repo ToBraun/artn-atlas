@@ -84,7 +84,7 @@ def main():
             name = f"cell_{loc}_r{res}.u16.gz"; save(name, idx); files[f"{loc}_r{res}"] = name
 
     meta = dict(label=a.label, y0=y0, y1=y1, n_points=int(len(time)), n_tracks=int(len(starts)),
-                locators=list(LOCATORS), resolutions=list(RESOLUTIONS), cells=files,
+                locators=[l for l in LOCATORS if any(k.startswith(l + '_') for k in files)], resolutions=list(RESOLUTIONS), cells=files,
                 tracks="tracks.u32.gz", month="month.u16.gz", ivt="ivt.u16.gz", ivt_scale=IVT_SCALE)
     (out / "meta.json").write_text(json.dumps(meta, indent=1))
     print(json.dumps(meta, indent=1))
