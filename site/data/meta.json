@@ -1,9 +1,9 @@
 {
- "label": "PIKART v1.0 \u00b7 ERA5",
+ "label": "PIKART v1.1 \u00b7 ERA5",
  "y0": 1940,
- "y1": 2023,
- "n_points": 1422416,
- "n_tracks": 134693,
+ "y1": 2025,
+ "n_points": 1445038,
+ "n_tracks": 137592,
  "locators": [
   "centroid",
   "head"

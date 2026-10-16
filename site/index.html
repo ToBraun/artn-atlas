@@ -210,7 +210,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
   <aside>
     <fieldset>
       <legend>Catalog</legend>
-      <select id="catalog" aria-label="AR catalog"><option id="catopt">PIKART</option></select>
+      <select id="catalog" aria-label="AR catalog"></select>
       <div class="row"><label for="locator">AR locator</label>
         <select id="locator"><option value="centroid">Centroid</option><option value="head">Head</option></select></div>
       <div class="row"><label for="res">Grid</label>
@@ -315,7 +315,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
 
     <section class="info" id="info" aria-live="polite"></section>
     <p class="cite">Method: Braun et al. (2026), <a href="https://doi.org/10.5194/esd-17-695-2026" target="_blank" rel="noopener">Earth Syst. Dynam. 17, 695–716</a>.<br>
-      Data: PIKART v1.0, <a href="https://doi.org/10.1029/2024JD041869" target="_blank" rel="noopener">Vallejo-Bernal et al. (2025)</a>.<br>
+      Data: PIKART v1.1 (1940–2025) and v1.0 (1940–2023, as in the paper), <a href="https://doi.org/10.1029/2024JD041869" target="_blank" rel="noopener">Vallejo-Bernal et al. (2025)</a>.<br>
       Code: MIT licence. Derived data: CC BY 4.0.</p>
   </aside>
 
@@ -407,12 +407,14 @@ const S = { view: "network", y0: 1940, y1: 2023, seasons: new Set(["DJF", "MAM",
   hwmode: "roads", cmptype: "windows", c0: 1940, c1: 1979, motor: 4, prim: 15, minor: true, ebcmode: "auto", hlen: 20, hstep: 10,
   minsize: 15, trials: 5, seed: 38, upstream: true, regime: "", phase: 0, selNode: -1, selBasin: -1 };
 const PHASECH = { "-1": "-", "0": "0", "1": "+" };
+const CATALOGS = [{ dir: "data", label: "PIKART v1.1 · ERA5 · 1940–2025" }, { dir: "data_v10", label: "PIKART v1.0 · ERA5 · 1940–2023 (paper)" }];
+let DATADIR = CATALOGS[0].dir;
 let META, Y0, Y1, NMON, OFF, MON, IVT, NTR, NPT, IVTTHR, land, trackStartYr, REG = null;
 const GRID = {}, CELLS = {};
 
 /* ---------- data loading ---------- */
 async function getBin(name, Type) {
-  const b64 = META && META.encoding === "base64", file = "data/" + name + (b64 ? ".b64.txt" : "");
+  const b64 = META && META.encoding === "base64", file = DATADIR + "/" + name + (b64 ? ".b64.txt" : "");
   let r; try { r = await fetch(file); } catch (e) { throw new Error("fetch failed"); }
   if (!r.ok) throw new Error(`${file}: HTTP ${r.status}`);
   let buf = b64 ? Uint8Array.from(atob((await r.text()).trim()), c => c.charCodeAt(0)) : new Uint8Array(await r.arrayBuffer());
@@ -420,10 +422,11 @@ async function getBin(name, Type) {
   return new Type(buf.buffer, buf.byteOffset, buf.byteLength / Type.BYTES_PER_ELEMENT);
 }
 async function loadBase() {
-  const r = await fetch("data/meta.json"); if (!r.ok) throw new Error("data/meta.json: HTTP " + r.status); META = await r.json();
+  const r = await fetch(DATADIR + "/meta.json"); if (!r.ok) throw new Error(DATADIR + "/meta.json: HTTP " + r.status); META = await r.json();
+  for (const k in CELLS) delete CELLS[k]; targetCache.clear(); NETHIST.length = 0; netHistKey = ""; REG = null;
   Y0 = META.y0; Y1 = META.y1; NMON = (Y1 - Y0 + 1) * 12; S.y0 = Y0; S.y1 = Y1;
   for (const id of ["y0", "y1"]) { $(id).min = Y0; $(id).max = Y1; } $("y0").value = Y0; $("y1").value = Y1;
-  $("datatag").textContent = META.label + " · " + Y0 + "–" + Y1; $("catopt").textContent = META.label + " · " + Y0 + "–" + Y1;
+  $("datatag").textContent = META.label + " · " + Y0 + "–" + Y1;
   let IVTraw; [OFF, MON, IVTraw] = await Promise.all([getBin(META.tracks, Uint32Array), getBin(META.month, Uint16Array), getBin(META.ivt, Uint16Array)]);
   const sc = META.ivt_scale || 1; IVT = sc === 1 ? IVTraw : Float32Array.from(IVTraw, v => v / sc);   // IVT is stored in steps of 1/ivt_scale kg m-1 s-1
   NTR = OFF.length - 1; NPT = MON.length;
@@ -433,11 +436,13 @@ async function loadBase() {
   IVTTHR = [q(.1), q(.25), q(.4), q(.6), q(.75), q(.9)];
   trackStartYr = new Int32Array(Y1 - Y0 + 1); for (let t = 0; t < NTR; t++) trackStartYr[Math.floor(MON[OFF[t]] / 12)]++;
   const topo = JSON.parse($("land").textContent); land = topojson.feature(topo, topo.objects.land);
-  try { const rr = await fetch("data/regimes.json"); if (rr.ok) { REG = await rr.json(); setupRegimes(); } } catch (e) { REG = null; }
+  try { const rr = await fetch(DATADIR + "/regimes.json"); if (rr.ok) { REG = await rr.json(); setupRegimes(); } } catch (e) { REG = null; }
 }
 function setupRegimes() {
+  const sel = $("regime"); while (sel.options.length > 1) sel.remove(1);
   if (!REG || !REG.indices.length) return; $("regimebox").hidden = false;
-  for (const ix of REG.indices) { const o = document.createElement("option"); o.value = ix.key; o.textContent = `${ix.name} (${ix.coverage[0]}–${ix.coverage[1]})`; $("regime").appendChild(o); }
+  for (const ix of REG.indices) { const o = document.createElement("option"); o.value = ix.key; o.textContent = `${ix.name} (${ix.coverage[0]}–${ix.coverage[1]})`; sel.appendChild(o); }
+  if (S.regime && !regimeIx(S.regime)) S.regime = ""; sel.value = S.regime;
 }
 const regimeIx = key => REG && REG.indices.find(i => i.key === key);
 function grid(res) {
@@ -952,7 +957,7 @@ function info() {
 let SNAP = null;
 function viewText() { const v = { network: "Network", hubs: "Hubs · " + METRIC[S.metric][0], highways: "Highways", basins: "Basins" }[S.view];
   const c = S.view === "highways" && S.hwmode === "compare" ? cmpLabels().join(" vs ") : condText(condA());
-  return { title: v + (S.show === "change" && (S.view === "network" || S.view === "hubs") ? " · change A − B" : ""), detail: `${c} · ${S.loc} · H3 res ${S.res}` }; }
+  return { title: v + (S.show === "change" && (S.view === "network" || S.view === "hubs") ? " · change A − B" : ""), detail: `${META.label} · ${c} · ${S.loc} · H3 res ${S.res}` }; }
 function snapshot() { ctx.putImageData(base, 0, 0);   // crop to the globe so the copy carries no empty margins
   const [[x0, y0], [x1, y1]] = path.bounds({ type: "Sphere" }), pad = 4, sx = Math.max(0, (x0 - pad) * DPR), sy = Math.max(0, (y0 - pad) * DPR);
   const w = Math.min(canvas.width - sx, (x1 - x0 + 2 * pad) * DPR), h = Math.min(canvas.height - sy, (y1 - y0 + 2 * pad) * DPR);
@@ -1062,6 +1067,10 @@ new MutationObserver(() => { drawHist(); draw(); }).observe(document.documentEle
 (async () => {
   const h = (location.hash || "").slice(1); if (["network", "hubs", "highways", "basins"].includes(h)) S.view = h;
   syncViewOpts(); resize();
+  const cat = $("catalog"); for (const c of CATALOGS) cat.add(new Option(c.label, c.dir));
+  const q = new URLSearchParams(location.search).get("catalog"); if (q && CATALOGS.some(c => c.dir === q)) DATADIR = q; cat.value = DATADIR;
+  cat.addEventListener("change", async () => { if (computing || playing) { cat.value = DATADIR; return; } DATADIR = cat.value;
+    try { setStatusText("Loading catalog…", true); await loadBase(); syncViewOpts(); drawHist(); await compute(); } catch (err) { console.error(err); showError(err); } });
   try { setStatusText("Loading catalog…", true); await loadBase(); syncViewOpts(); drawHist(); await compute(); }
   catch (err) { console.error(err); showError(err); $("datatag").textContent = "Data not loaded"; }
   window.__ready = true;

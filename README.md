@@ -9,12 +9,15 @@ Everything is computed in the visitor's browser from a compact copy of the AR ca
 ```
 site/
   index.html          the app (single file)
-  data/               compact catalog, about 13 MB in total
+  data/               PIKART v1.1 (1940–2025, default), about 13 MB in total
     meta.json
     tracks.u32.gz  month.u16.gz  ivt.u16.gz
     cell_<centroid|head>_r<1|2|3>.u16.gz
     regimes.json      monthly ENSO / NAO / blocking phases
+  data_v10/           PIKART v1.0 (1940–2023), as used in Braun et al. (2026); same files
+                      choose it in the Catalog menu or open index.html?catalog=data_v10
 tools/
+  pikart_v11_to_hex.py  turns the yearly PIKART V1.1 Lagrangian NetCDF files into PIKART_V1.1_ERA5_hex.pkl and the slim .npz (run on the HPC)
   prep_web_data.py    builds site/data from PIKART_hex.pkl (or the slim .npz)
   prep_regimes.py     builds site/data/regimes.json from the index tables
 .github/workflows/
@@ -31,11 +34,12 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-## Rebuild the data (for example for PIKART v1.1)
+## Rebuild the data
 
 ```bash
 pip install numpy pandas h3
-python3 tools/prep_web_data.py /path/to/PIKART_hex.pkl site/data --label "PIKART v1.0 · ERA5"
+python3 tools/prep_web_data.py /path/to/PIKART_V1.1_ERA5_slim.npz site/data     --label "PIKART v1.1 · ERA5"
+python3 tools/prep_web_data.py /path/to/PIKART_hex.pkl            site/data_v10 --label "PIKART v1.0 · ERA5"
 ```
 
 The input needs `time`, `trackid`, `mean_ivt` (magnitude) and `hex_idx_<centroid|head>_res<1|2|3>` columns.
@@ -43,8 +47,11 @@ The input needs `time`, `trackid`, `mean_ivt` (magnitude) and `hex_idx_<centroid
 Climate regimes (ONI.txt, NAO_2023.txt, BlockIndex.txt in one folder):
 
 ```bash
-python3 tools/prep_regimes.py /path/to/indices site/data --y0 1940 --y1 2023
+python3 tools/prep_regimes.py /path/to/indices site/data     --y0 1940 --y1 2025
+python3 tools/prep_regimes.py /path/to/indices site/data_v10 --y0 1940 --y1 2023
 ```
+
+The index tables currently end in 2023 (ENSO uses complete years only, as in the Fig. 4 script), so with v1.1 the regime filters cover 1951–2023 and months after that are left out. Newer tables in the same format can be dropped in; the phases come from z-scores over the whole record, so they can shift slightly.
 
 ENSO phases follow `classify_sustained_phases` in `Fig4_ARHighways_conditional.py`, including its reading of ONI.txt (the first row, 1950, is skipped there).
 
@@ -53,7 +60,7 @@ With a season or regime filter the app by default picks the AR count threshold w
 ## Credits and licence
 
 - Method: Braun et al. (2026), Earth Syst. Dynam. 17, 695–716, https://doi.org/10.5194/esd-17-695-2026
-- Data: PIKART v1.0, Vallejo-Bernal et al. (2025), https://doi.org/10.1029/2024JD041869
+- Data: PIKART v1.1 and v1.0, Vallejo-Bernal et al. (2025), https://doi.org/10.1029/2024JD041869
 - Colour maps: Crameri, F., Shephard, G. E. and Heron, P. J. (2020), The misuse of colour in science communication, Nat. Commun. 11, 5444, https://www.fabiocrameri.ch/colourmaps/
 - Code: MIT licence (see LICENSE). Derived data in `site/data`: CC BY 4.0.
 - Libraries loaded from CDNs: d3 (ISC), topojson-client (ISC), h3-js (Apache-2.0), @mapequation/infomap (GPL-3.0), world-atlas land outlines (Natural Earth, public domain).
