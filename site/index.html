@@ -88,8 +88,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .phase3 button:nth-child(1) { text-align: left; } .phase3 button:nth-child(2) { text-align: center; } .phase3 button:nth-child(3) { text-align: right; }
 .phase3 button[aria-current="true"] { color: var(--ink); font-weight: 600; }
 
-main { position: relative; min-width: 0; min-height: 0; background: var(--sea); overflow: hidden; }
-#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+main { position: relative; min-width: 0; min-height: 0; background: var(--sea); overflow: hidden; display: flex; flex-direction: column; }   /* map on top, legend in a strip below it so it never covers a region */
+#map { position: relative; flex: 1 1 0; min-height: 0; width: 100%; display: block; cursor: crosshair; }
 .overlay { position: absolute; pointer-events: none; }
 .legend { left: 14px; bottom: 12px; background: color-mix(in srgb, var(--paper) 90%, transparent); border: 1px solid var(--rule); border-radius: 6px; padding: 9px 12px; min-width: 250px; max-width: calc(100% - 28px); }
 .legend .lbl { margin-bottom: 6px; display: block; text-transform: none; letter-spacing: .01em; font-size: 15px; color: var(--ink); }
@@ -97,6 +97,13 @@ main { position: relative; min-width: 0; min-height: 0; background: var(--sea); 
 .legend .ticks { display: flex; justify-content: space-between; gap: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); margin-top: 4px; }
 .legend .credit { font-size: 12px; color: var(--muted); margin: 5px 0 0; }
 .legend a { pointer-events: auto; }
+main > .legend { position: static; flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 30px; min-height: 60px; min-width: 0; max-width: none; margin: 0; padding: 8px 16px; border: 0; border-top: 1px solid var(--rule); border-radius: 0; background: var(--paper); pointer-events: auto; }
+main > .legend .lbl { margin: 0; max-width: 340px; }
+.rampbox { flex: 0 1 360px; min-width: 200px; }
+main > .legend .credit { margin: 0 0 0 auto; align-self: flex-end; }
+main > .legend .wkey { margin-top: 0; }
+main > .legend .roads { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; } main > .legend .roads i { width: 34px; flex: none; } main > .legend .roads span { margin-right: 14px; }
+main > .legend p.credit { margin: 0 0 0 auto; }
 .roads { display: grid; grid-template-columns: 46px 1fr; gap: 5px 10px; align-items: center; font-size: 14px; }
 .roads i { display: block; height: 0; border-radius: 3px; }
 .ivtbar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -121,7 +128,12 @@ main { position: relative; min-width: 0; min-height: 0; background: var(--sea); 
 #cmpview figure img.snap { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 #cmpview figcaption { position: absolute; right: 12px; top: 8px; font-size: 13.5px; background: color-mix(in srgb, var(--paper) 90%, transparent); padding: 4px 8px; border-radius: 4px; max-width: 60%; text-align: right; }
 #cmpview figcaption b { font-family: var(--f-display); font-size: 15px; letter-spacing: .03em; }
-#cmpview .legend { transform: scale(.85); transform-origin: bottom left; }
+#cmpview figure { display: flex; flex-direction: column; }
+#cmpview figure img.snap { position: static; flex: 1 1 0; min-height: 0; height: auto; }
+#cmpview .legend { position: static; flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 24px; min-width: 0; max-width: none; margin: 0; padding: 4px 14px; border: 0; border-top: 1px solid var(--rule); border-radius: 0; background: var(--paper); font-size: 90%; pointer-events: auto; }
+#cmpview .legend .lbl { margin: 0; font-size: 14px; max-width: 300px; } #cmpview .legend .credit, #cmpview .legend p.credit { margin: 0 0 0 auto; } #cmpview .legend .wkey { margin-top: 0; }
+#cmpview .legend .roads { display: flex; flex-wrap: wrap; gap: 3px 8px; } #cmpview .legend .roads i { width: 34px; flex: none; } #cmpview .legend .roads span { margin-right: 14px; }
+#cmpview figcaption { z-index: 1; }
 .info { margin-top: auto; border-top: 1px solid var(--rule); padding-top: 12px; }
 .info h3 { font-family: var(--f-display); font-weight: 600; font-size: 18px; letter-spacing: .01em; margin: 0 0 6px; display: flex; align-items: center; gap: 6px; }
 .info dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 0; font-size: 14px; }
@@ -153,8 +165,8 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
   aside { grid-row: 4; border-right: 0; border-top: 1px solid var(--rule); padding-right: max(16px, env(safe-area-inset-right, 0px)); overflow: visible; }
   nav.tabs { margin-left: 0; width: 100%; order: 3; } nav.tabs button { flex: 1; padding: 6px 4px; }
   .brand { flex: 1 1 0; } .brand svg { height: 32px; } .brand h1 { font-size: 16px; } .tag { display: none; } .info { margin-top: 0; } .themebtn span { display: none; }
-  main > .legend { position: static; min-width: 0; max-width: none; margin: 0 8px 8px; padding: 7px 10px; background: var(--paper); }
-  main > .legend { padding: 6px 9px; margin: 0 8px 6px; }
+  main > .legend { display: block; min-height: 0; margin: 0 8px 6px; padding: 6px 9px; border: 1px solid var(--rule); border-radius: 6px; }
+  main > .legend .lbl { max-width: none; } .rampbox { min-width: 0; } main > .legend .credit, main > .legend p.credit { margin: 2px 0 0; } main > .legend .wkey { margin-top: 4px; }
   .legend .lbl { font-size: 13px; margin-bottom: 3px; } .legend img.ramp, .ivtbar i { height: 7px; } .legend .ticks { font-size: 11.5px; margin-top: 2px; }
   .legend .credit { font-size: 11px; margin-top: 2px; } .wkey { font-size: 12px; margin-top: 4px; gap: 2px 9px; } .wkey i { width: 18px; }
   .roads { grid-template-columns: 20px auto 20px auto; justify-content: start; gap: 3px 6px; font-size: 12.5px; } .roads span { margin-right: 10px; }
@@ -165,9 +177,9 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
   #cmpview .bar { position: sticky; top: 0; z-index: 2; background: var(--paper); padding: max(8px, env(safe-area-inset-top, 0px)) 10px 8px; flex-wrap: wrap; font-size: 13.5px; }
   #cmpview .bar button { padding: 4px 8px; font-size: 13px; }
   #cmpview figure { border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
-  #cmpview figure img.snap { position: static; display: block; width: 100%; height: auto; }
+  #cmpview figure { display: block; } #cmpview figure img.snap { position: static; display: block; width: 100%; height: auto; flex: none; }
   #cmpview figcaption { position: static; max-width: none; text-align: left; background: none; padding: 4px 10px 2px; font-size: 12.5px; }
-  #cmpview .legend { position: static; transform: none; min-width: 0; max-width: none; margin: 4px 8px 0; padding: 6px 9px; }
+  #cmpview .legend { display: block; position: static; transform: none; min-width: 0; max-width: none; margin: 4px 8px 0; padding: 6px 9px; border: 1px solid var(--rule); border-radius: 6px; }
 }
 </style>
 
@@ -879,10 +891,10 @@ function rampImg(interp) { const c = document.createElement("canvas"); c.width =
   for (let i = 0; i < 240; i++) { x.fillStyle = interp(i / 239); x.fillRect(i, 0, 1, 12); } return `<img class="ramp" alt="" src="${c.toDataURL()}">`; }
 function legendRamp(title, interp, lo, hi, ends, years) { const f = years ? (v => String(Math.round(v))) : fmt;
   const a = ends ? `${f(lo)} ${ends[0]}` : f(lo), z = ends ? `${ends[1]} ${f(hi)}` : f(hi);
-  $("legend").innerHTML = `<span class="lbl">${title}</span>${rampImg(interp)}<div class="ticks"><span>${a}</span><span>${f((lo + hi) / 2)}</span><span>${z}</span></div><div class="credit">${CRAMERI}</div>`; }
+  $("legend").innerHTML = `<span class="lbl">${title}</span><div class="rampbox">${rampImg(interp)}<div class="ticks"><span>${a}</span><span>${f((lo + hi) / 2)}</span><span>${z}</span></div></div><div class="credit">${CRAMERI}</div>`; }
 function legendIVT(title) { const t = IVTTHR, P = PAL(), C = P.ivtClass;
-  $("legend").innerHTML = `<span class="lbl">${title} (${UNIT_IVT})</span><div class="ivtbar">${C.map(c => `<i style="background:${c}"></i>`).join("")}</div>
-  <div class="ticks"><span>loss: ${num(t[0], 0)} or less</span><span>${num(t[2], 0)} to ${num(t[3], 0)}</span><span>gain: ${num(t[5], 0)} or more</span></div>${P.crameriIVT ? `<div class="credit">${CRAMERI}</div>` : ""}`; }
+  $("legend").innerHTML = `<span class="lbl">${title} (${UNIT_IVT})</span><div class="rampbox"><div class="ivtbar">${C.map(c => `<i style="background:${c}"></i>`).join("")}</div>
+  <div class="ticks"><span>loss: ${num(t[0], 0)} or less</span><span>${num(t[2], 0)} to ${num(t[3], 0)}</span><span>gain: ${num(t[5], 0)} or more</span></div></div>${P.crameriIVT ? `<div class="credit">${CRAMERI}</div>` : ""}`; }
 function legendRoads() { $("legend").innerHTML = `<span class="lbl">Road types by edge betweenness</span><div class="roads">
   <i style="border-top:5px solid ${css("--motorway")};outline:1px solid ${css("--road-casing")}"></i><span>Highway: top ${S.motor}%</span>
   <i style="border-top:3px solid ${css("--primary")};outline:1px solid ${css("--road-casing")}"></i><span>Main road: top ${S.prim}%</span>
@@ -1042,6 +1054,7 @@ canvas.addEventListener("mouseleave", () => { $("tip").hidden = true; if (base) 
 canvas.addEventListener("click", ev => { const r = canvas.getBoundingClientRect(), c = cellAt(ev.clientX - r.left, ev.clientY - r.top); S.selNode = c;
   S.selBasin = BAS && c >= 0 ? BAS.lab[c] || -1 : -1; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); draw(); });
 window.addEventListener("resize", () => { resize(); drawHist(); draw(); });
+{ let lw = 0, lh = 0; new ResizeObserver(() => { const r = canvas.getBoundingClientRect(); if (Math.abs(r.width - lw) < 1 && Math.abs(r.height - lh) < 1) return; lw = r.width; lh = r.height; if (!G) return; resize(); draw(); }).observe(canvas); }   // the legend strip changes height with its content
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { drawHist(); draw(); });
 new MutationObserver(() => { drawHist(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
