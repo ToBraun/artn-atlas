@@ -83,6 +83,22 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 #qtip { position: fixed; z-index: 50; max-width: 300px; background: var(--ink); color: var(--paper); font-size: 13.5px; line-height: 1.45; padding: 8px 10px; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 14px rgb(0 0 0 / .18); }
 .warn { color: var(--err-fg); background: var(--err-bg); padding: 6px 8px; border-radius: 4px; font-size: 13.5px; line-height: 1.45; margin: 0; }
 .viewopts[hidden] { display: none !important; }
+/* phase selector: three discrete stops on a plain track, no left-to-right fill */
+#phase { -webkit-appearance: none; appearance: none; height: 22px; background: transparent; cursor: pointer; margin: 2px 0; }
+#phase::-webkit-slider-runnable-track { height: 22px; border-radius: 11px;
+  background: radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 0 50% / 22px 22px no-repeat,
+              radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 50% 50% / 22px 22px no-repeat,
+              radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 100% 50% / 22px 22px no-repeat,
+              linear-gradient(var(--rule), var(--rule)) 50% 50% / calc(100% - 22px) 2px no-repeat; }
+#phase::-moz-range-track { height: 22px; border-radius: 11px;
+  background: radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 0 50% / 22px 22px no-repeat,
+              radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 50% 50% / 22px 22px no-repeat,
+              radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 100% 50% / 22px 22px no-repeat,
+              linear-gradient(var(--rule), var(--rule)) 50% 50% / calc(100% - 22px) 2px no-repeat; }
+#phase::-moz-range-progress { background: transparent; }
+#phase::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink); box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 11px var(--accent); }
+#phase::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
+#phase:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 11px; }
 .phase3 { display: grid; grid-template-columns: repeat(3, 1fr); font-size: 13.5px; margin-top: -4px; }
 .phase3 button { font: inherit; background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 0; }
 .phase3 button:nth-child(1) { text-align: left; } .phase3 button:nth-child(2) { text-align: center; } .phase3 button:nth-child(3) { text-align: right; }
@@ -315,7 +331,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
 
     <section class="info" id="info" aria-live="polite"></section>
     <p class="cite">Method: Braun et al. (2026), <a href="https://doi.org/10.5194/esd-17-695-2026" target="_blank" rel="noopener">Earth Syst. Dynam. 17, 695–716</a>.<br>
-      Data: PIKART v1.1 and v1.0 (ERA5, MERRA-2), <a href="https://doi.org/10.1029/2024JD041869" target="_blank" rel="noopener">Vallejo-Bernal et al. (2025)</a>; tARget v4.0, <a href="https://doi.org/10.1002/2015JD024257" target="_blank" rel="noopener">Guan and Waliser (2015)</a>.<br>
+      Data: PIKART v1.1 and v1.0 (ERA5, MERRA-2), <a href="https://ar.pik-potsdam.de" target="_blank" rel="noopener">ar.pik-potsdam.de</a>; tARget v4.0, <a href="https://doi.org/10.1038/s41597-024-03258-4" target="_blank" rel="noopener">Guan &amp; Waliser (2024)</a>.<br>
       Code: MIT licence. Derived data: CC BY 4.0.</p>
   </aside>
 

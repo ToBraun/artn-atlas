@@ -63,8 +63,8 @@ With a season or regime filter the app by default picks the AR count threshold w
 ## Credits and licence
 
 - Method: Braun et al. (2026), Earth Syst. Dynam. 17, 695–716, https://doi.org/10.5194/esd-17-695-2026
-- Data: tARget v4.0, Guan and Waliser (2015), https://doi.org/10.1002/2015JD024257
-- Data: PIKART v1.1 and v1.0, Vallejo-Bernal et al. (2025), https://doi.org/10.1029/2024JD041869
+- Data: tARget v4.0, Guan & Waliser (2024), Sci. Data, https://doi.org/10.1038/s41597-024-03258-4
+- Data: PIKART v1.1 and v1.0, https://ar.pik-potsdam.de (Vallejo-Bernal et al. 2025, https://doi.org/10.1029/2024JD041869)
 - Colour maps: Crameri, F., Shephard, G. E. and Heron, P. J. (2020), The misuse of colour in science communication, Nat. Commun. 11, 5444, https://www.fabiocrameri.ch/colourmaps/
 - Code: MIT licence (see LICENSE). Derived data in `site/data`: CC BY 4.0.
 - Libraries loaded from CDNs: d3 (ISC), topojson-client (ISC), h3-js (Apache-2.0), @mapequation/infomap (GPL-3.0), world-atlas land outlines (Natural Earth, public domain).
