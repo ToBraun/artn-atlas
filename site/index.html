@@ -273,7 +273,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
         <select id="hwmode"><option value="roads">Road types</option><option value="ivt">IVT gain or loss</option><option value="compare">Compare A and B</option><option value="history">Highways through time</option></select></div>
       <div id="cmpbox" hidden>
         <div class="row"><label for="cmptype">Compare</label>
-          <select id="cmptype"><option value="windows">Two time windows</option><option value="seasons">JJA and DJF</option><option value="phases">Opposite regime phases</option></select></div>
+          <select id="cmptype"><option value="windows">Two time windows</option><option value="seasons">DJF and JJA</option><option value="phases">Opposite regime phases</option></select></div>
         <div class="row" id="cmpwin"><label for="c0">Window B</label>
           <span><input type="number" id="c0" value="1940"> – <input type="number" id="c1" value="1979"></span></div>
       </div>
@@ -412,11 +412,12 @@ async function loadBase() {
   Y0 = META.y0; Y1 = META.y1; NMON = (Y1 - Y0 + 1) * 12; S.y0 = Y0; S.y1 = Y1;
   for (const id of ["y0", "y1"]) { $(id).min = Y0; $(id).max = Y1; } $("y0").value = Y0; $("y1").value = Y1;
   $("datatag").textContent = META.label + " · " + Y0 + "–" + Y1; $("catopt").textContent = META.label + " · " + Y0 + "–" + Y1;
-  [OFF, MON, IVT] = await Promise.all([getBin(META.tracks, Uint32Array), getBin(META.month, Uint16Array), getBin(META.ivt, Uint16Array)]);
+  let IVTraw; [OFF, MON, IVTraw] = await Promise.all([getBin(META.tracks, Uint32Array), getBin(META.month, Uint16Array), getBin(META.ivt, Uint16Array)]);
+  const sc = META.ivt_scale || 1; IVT = sc === 1 ? IVTraw : Float32Array.from(IVTraw, v => v / sc);   // IVT is stored in steps of 1/ivt_scale kg m-1 s-1
   NTR = OFF.length - 1; NPT = MON.length;
   const diffs = new Float32Array(NPT - NTR); let k = 0;   // IVT classes: pooled quantiles .1 .25 .4 .6 .75 .9, as in the Fig. 4 script
   for (let t = 0; t < NTR; t++) for (let i = OFF[t]; i < OFF[t + 1] - 1; i++) diffs[k++] = IVT[i + 1] - IVT[i];
-  diffs.sort(); const q = p => Math.round(diffs[Math.floor(p * (diffs.length - 1))]);
+  diffs.sort(); const q = p => { const h = p * (diffs.length - 1), i = Math.floor(h); return diffs[i] + (h - i) * ((diffs[i + 1] ?? diffs[i]) - diffs[i]); };   // linear interpolation, as numpy.nanquantile
   IVTTHR = [q(.1), q(.25), q(.4), q(.6), q(.75), q(.9)];
   trackStartYr = new Int32Array(Y1 - Y0 + 1); for (let t = 0; t < NTR; t++) trackStartYr[Math.floor(MON[OFF[t]] / 12)]++;
   const topo = JSON.parse($("land").textContent); land = topojson.feature(topo, topo.objects.land);
@@ -448,11 +449,11 @@ const curPhases = () => new Set([PHASECH[S.phase]]);
 function condA() { return { y0: S.y0, y1: S.y1, seasons: S.seasons, regime: S.regime, phases: curPhases() }; }
 const winCond = (c, a, b) => ({ ...c, y0: Math.max(Y0, Math.min(a, b)), y1: Math.min(Y1, Math.max(a, b)) });
 function condRef() { return winCond(condA(), S.b0, S.b1); }                 // reference window B for "Change (A − B)"
-function cmpA() { const A = condA(); if (S.cmptype === "seasons") return { ...A, seasons: new Set(["JJA"]) };
+function cmpA() { const A = condA(); if (S.cmptype === "seasons") return { ...A, seasons: new Set(["DJF"]) };   // DJF purple, JJA green, as in the Fig. 4d colour bars
   if (S.cmptype === "phases") return { ...A, regime: S.regime || "enso", phases: new Set(["-"]) }; return A; }
-function cmpB() { const A = condA(); if (S.cmptype === "seasons") return { ...A, seasons: new Set(["DJF"]) };
+function cmpB() { const A = condA(); if (S.cmptype === "seasons") return { ...A, seasons: new Set(["JJA"]) };
   if (S.cmptype === "phases") return { ...A, regime: S.regime || "enso", phases: new Set(["+"]) }; return winCond(A, S.c0, S.c1); }
-function cmpLabels() { if (S.cmptype === "seasons") return ["JJA", "DJF"];
+function cmpLabels() { if (S.cmptype === "seasons") return ["DJF", "JJA"];
   if (S.cmptype === "phases") { const ix = regimeIx(S.regime || "enso"); return ix ? [ix.neg, ix.pos] : ["negative phase", "positive phase"]; }
   return [`${S.y0}–${S.y1}`, `${Math.min(S.c0, S.c1)}–${Math.max(S.c0, S.c1)}`]; }
 const filtered = c => c.seasons.size < 4 || !!c.regime;
@@ -474,7 +475,7 @@ function aggregate(c) {
   const g = grid(S.res), CELL = CELLS[S.loc + "_r" + S.res], NC = g.cells.length, { mask, months } = monthMask(c);
   const agg = new Map(), outS = new Map(), inS = new Map(); let nAR = 0;
   for (let t = 0; t < NTR; t++) { let used = false;
-    for (let i = OFF[t]; i < OFF[t + 1] - 1; i++) { if (!mask[MON[i]]) continue; used = true;
+    for (let i = OFF[t]; i < OFF[t + 1] - 1; i++) { if (!mask[MON[i]] || !mask[MON[i + 1]]) continue; used = true;   // both time steps inside the selection, as when the scripts subset the catalogue rows
       const f = CELL[i], d = CELL[i + 1], dv = IVT[i + 1] - IVT[i];
       let o = outS.get(f); if (!o) outS.set(f, o = [0, 0]); o[0] += IVT[i + 1]; o[1]++;
       let n = inS.get(d); if (!n) inS.set(d, n = [0, 0]); n[0] += IVT[i]; n[1]++;
@@ -577,29 +578,36 @@ async function infomapBasins(G) {
   for (let e = 0; e < G.E; e++) lines.push(G.gid[G.src[e]] + " " + G.gid[G.dst[e]] + " " + (G.w[e] / total).toExponential(6));
   const Infomap = window.infomap.default;
   // detect_non_hierarchical_communities(..., use_node_weights_as_flow=True) in Fig5_ARbasins.py
-  const args = { twoLevel: true, directed: true, noSelfLinks: true, useNodeWeightsAsFlow: true, numTrials: S.trials, seed: S.seed, clu: true, silent: true };
+  const args = { twoLevel: true, directed: true, noSelfLinks: true, useNodeWeightsAsFlow: true, numTrials: S.trials, seed: S.seed, output: ["clu", "flow"], silent: true };
   const res = await new Infomap().runAsync({ network: lines.join("\n"), args });
   const mod = new Int32Array(G.g.cells.length).fill(-1);
   for (const line of res.clu.split("\n")) { if (!line || line[0] === "#") continue; const [id, m] = line.trim().split(/\s+/); mod[+id] = +m; }
-  return mod;
+  // link flows of Infomap's flow model, used for the intra/inter flow ratio (compute_community_flow_ratio)
+  const fl = new Map(), NC = G.NC; let arcs = false;
+  for (const line of (res.flow || "").split("\n")) { if (line.startsWith("*")) { arcs = line.startsWith("*Arcs") || line.startsWith("*Links"); continue; }
+    if (!arcs || !line || line[0] === "#") continue; const [a, b, f] = line.trim().split(/\s+/); fl.set(+a * NC + +b, +f); }
+  const flow = Float64Array.from(G.keys, k => fl.get(k) || 0);
+  return { mod, flow };
 }
-function relabelBasins(G, mod) {
+function relabelBasins(G, IM) { const mod = IM.mod, flow = IM.flow;
   const size = new Map(); for (const m of mod) if (m >= 0) size.set(m, (size.get(m) || 0) + 1);
   const keep = [...size].filter(([, s]) => s >= S.minsize).sort((a, b) => b[1] - a[1]);
   const lab = new Map(keep.map(([m], i) => [m, i + 1]));
   const out = new Int32Array(mod.length); for (let i = 0; i < mod.length; i++) if (mod[i] >= 0) out[i] = lab.get(mod[i]) || 0;
   const intra = new Float64Array(keep.length + 1), inter = new Float64Array(keep.length + 1);
-  for (let e = 0; e < G.E; e++) { const a = out[G.gid[G.src[e]]], b = out[G.gid[G.dst[e]]];
-    if (a && a === b) intra[a] += G.w[e]; else { if (a) inter[a] += G.w[e]; if (b) inter[b] += G.w[e]; } }
-  return { lab: out, n: keep.length, sizes: keep.map(k => k[1]), ratio: Array.from(intra, (v, i) => inter[i] ? v / inter[i] : Infinity), _mod: mod };
+  for (let e = 0; e < G.E; e++) { const a = out[G.gid[G.src[e]]], b = out[G.gid[G.dst[e]]];   // as compute_community_flow_ratio: both ends in kept basins,
+    if (!a || !b) continue; if (a === b) intra[a] += flow[e]; else inter[a] += flow[e]; }       // inter = flow leaving basin a
+  return { lab: out, n: keep.length, sizes: keep.map(k => k[1]), ratio: Array.from(intra, (v, i) => inter[i] ? v / inter[i] : Infinity), _im: IM };
 }
 function upstreamEdges(lab, b) {   // segments of every AR up to its last visit of basin b (as in Fig. 5b/c)
   const CELL = CELLS[S.loc + "_r" + S.res], NC = G.g.cells.length, { mask } = monthMask(condA()), agg = new Map(); let nAR = 0;
-  for (let t = 0; t < NTR; t++) { const a = OFF[t], z = OFF[t + 1]; if (!mask[MON[a]]) continue;
+  for (let t = 0; t < NTR; t++) { const a = OFF[t], z = OFF[t + 1];
     let last = -1; for (let i = a; i < z; i++) if (lab[CELL[i]] === b) last = i;
-    if (last <= a) continue; nAR++;
-    for (let i = a; i < last; i++) { const f = CELL[i], d = CELL[i + 1]; if (f === d) continue; const k = f * NC + d;
-      let e = agg.get(k); if (!e) agg.set(k, e = [0, 0]); e[0]++; e[1] += IVT[i + 1] - IVT[i]; } }
+    if (last <= a) continue; let used = false;
+    for (let i = a; i < last; i++) { if (!mask[MON[i]] || !mask[MON[i + 1]]) continue; used = true;
+      const f = CELL[i], d = CELL[i + 1]; if (f === d) continue; const k = f * NC + d;
+      let e = agg.get(k); if (!e) agg.set(k, e = [0, 0]); e[0]++; e[1] += IVT[i + 1] - IVT[i]; }
+    if (used) nAR++; }
   return { agg, nAR };
 }
 
@@ -688,8 +696,9 @@ function rememberNetwork() {   // short memory of the last networks for "only ga
 }
 async function highwayHistory() {   // highways of successive windows, as in the storm-track migration figure
   const L = S.hlen, step = S.hstep, starts = [];
-  for (let y = Y0; y + L - 1 <= Y1; y += step) starts.push(y);
-  if (starts[starts.length - 1] + L - 1 < Y1) starts.push(Y1 - L + 1);
+  const A = S.y0, Z = S.y1;   // windows tile the period selected on the timeline, counted back from its end with exactly the chosen step
+  for (let y = Z - L + 1; y >= A; y -= step) starts.unshift(y);
+  if (!starts.length) starts.push(A);
   const out = [];
   for (let i = 0; i < starts.length; i++) { const c = { ...condA(), y0: starts[i], y1: starts[i] + L - 1 };
     ebcLabel = `Window ${i + 1} of ${starts.length}: `; setStatusText(ebcLabel + "building network…", true);
@@ -804,7 +813,7 @@ function drawHubs() {
       const a = vals.get(c), b = vb.get(c); if (S.metric === "ivtnode" && !(isFinite(a) && isFinite(b))) continue; d.set(c, (isFinite(a) ? a : 0) - (isFinite(b) ? b : 0)); } vals = d; }
   const signed = change || S.metric === "divergence" || S.metric === "ivtnode"; const entries = [...vals].filter(([, v]) => isFinite(v)); let col;
   const [mname, unit] = METRIC[S.metric];
-  if (signed) { const m = d3.quantile(entries.map(x => Math.abs(x[1])).sort(d3.ascending), .98) || 1; const interp = S.metric === "ivtnode" && !change ? P.ivt : P.div;
+  if (signed) { const m = d3.quantile(entries.map(x => Math.abs(x[1])).sort(d3.ascending), .98) || 1; const interp = (S.metric === "ivtnode" || S.metric === "divergence") && !change ? P.ivt : P.div;   // as in Figs. 2c/3a: sinks and losses red, sources and gains blue
     col = x => interp((x / m + 1) / 2);
     const ends = change ? ["lower in A", "higher in A"] : S.metric === "divergence" ? ["sink", "source"] : ["loss", "gain"];
     legendRamp(`${change ? "Change in " + mname.toLowerCase() + ", A − B" : mname} (${S.metric === "ivtnode" ? UNIT_IVT : unit})`, interp, -m, m, ends);
@@ -904,7 +913,8 @@ function info() {
   const I = $("info"), g = G.g;
   if (HIST) { const L = S.hlen, ovl = S.hstep < L;
     const tip = `Each dot is the mean latitude of the highway edges (top ${S.motor}% betweenness) poleward of 20°, weighted by betweenness and placed at the window centre. The dashed line is an ordinary least-squares fit, drawn only when its slope differs from zero in a two-sided t-test (p < 0.05).` +
-      (ovl ? ` The ${L}-year windows overlap by ${L - S.hstep} years, so neighbouring dots are not independent and the p-values are too optimistic; set the step to ${L} years for independent windows.` : " The windows do not overlap.");
+      (ovl ? ` The ${L}-year windows overlap by ${L - S.hstep} years, so neighbouring dots are not independent and the p-values are too optimistic; set the step to ${L} years for independent windows.` : " The windows do not overlap.") +
+      ` Windows tile the period selected on the timeline. ERA5 is less constrained by observations before the satellite era (1979), especially in the Southern Hemisphere, so compare with a selection starting in 1979.`;
     I.innerHTML = `<h3>Mean highway latitude ${qm(tip)}</h3>${latChart()}<p class="note">Northern Hemisphere: ${trendText(HIST.nhTrend)}.<br>Southern Hemisphere: ${trendText(HIST.shTrend)}.</p>`; return; }
   if (S.selNode >= 0) { const i = G.nodeOf.get(S.selNode); const b = BAS ? BAS.lab[S.selNode] : 0;
     I.innerHTML = `<h3>Cell at ${ll(g, S.selNode)}</h3>` + (i === undefined ? `<p class="note">No edges above the threshold touch this cell.</p>` : `<dl>
@@ -987,7 +997,7 @@ bindRange("tophubs", "tophubs", v => String(v), redraw);
 bindRange("wmax", "wmax", v => v.toFixed(1) + " px", redraw);
 bindRange("motor", "motor", v => v + "%", () => { if (HIST) changed(); else redraw(); });
 bindRange("prim", "prim", v => v + "%", redraw);
-bindRange("minsize", "minsize", v => v + " cells", () => { if (BAS && G) { BAS = relabelBasins(G, BAS._mod); draw(); } else changed(); });
+bindRange("minsize", "minsize", v => v + " cells", () => { if (BAS && G) { BAS = relabelBasins(G, BAS._im); draw(); } else changed(); });
 bindRange("hlen", "hlen", v => v + " years"); bindRange("hstep", "hstep", v => v + " years");
 const onSel = (id, key, recompute, isNum) => $(id).onchange = e => { S[key] = isNum ? +e.target.value : e.target.value; syncViewOpts(); if (recompute) changed(true); else draw(); };
 onSel("metric", "metric", false); onSel("netcol", "netcol", false); onSel("netw", "netw", false); onSel("wscale", "wscale", false);

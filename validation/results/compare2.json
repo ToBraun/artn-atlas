@@ -1,0 +1,81 @@
+{
+ "window_1980_2019": {
+  "ref_edges": 13072,
+  "browser_edges": 13072,
+  "jaccard": 1.0,
+  "weight_identical": 0.9981640146878825,
+  "max_weight_diff": 1.0
+ },
+ "DJF_rate_eps4": {
+  "ref_edges": 14305,
+  "browser_edges": 14305,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "DJF_eps5": {
+  "ref_edges": 11519,
+  "browser_edges": 11519,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "JJA_eps5": {
+  "ref_edges": 11421,
+  "browser_edges": 14027,
+  "jaccard": 0.8142,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "MAM_eps5": {
+  "ref_edges": 11722,
+  "browser_edges": 11722,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "SON_eps5": {
+  "ref_edges": 11852,
+  "browser_edges": 11852,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "enso_labels": {
+  "months_compared": 876,
+  "mismatches": 0,
+  "first_mismatches": [],
+  "counts": {
+   "+": 155,
+   "0": 520,
+   "-": 201
+  }
+ },
+ "ENSO_nina_eps4": {
+  "ref_edges": 12399,
+  "browser_edges": 12399,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "ENSO_neut_eps9": {
+  "ref_edges": 12520,
+  "browser_edges": 12520,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "ENSO_nino_eps3": {
+  "ref_edges": 13470,
+  "browser_edges": 13470,
+  "jaccard": 1.0,
+  "weight_identical": 1.0,
+  "max_weight_diff": 0.0
+ },
+ "enso_paper_thresholds_3_9_3": {
+  "nina": 16621,
+  "neut": 12520,
+  "nino": 13470
+ },
+ "unconditioned_edges_eps16": 12750
+}

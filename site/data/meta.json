@@ -23,5 +23,6 @@
  },
  "tracks": "tracks.u32.gz",
  "month": "month.u16.gz",
- "ivt": "ivt.u16.gz"
+ "ivt": "ivt.u16.gz",
+ "ivt_scale": 50
 }

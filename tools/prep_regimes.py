@@ -54,7 +54,8 @@ def labels(vals, y0, y1, rolling, thresh, min_periods):
     z = (series - np.nanmean(series)) / np.nanstd(series)
     pos = sustained(np.nan_to_num(z, nan=0) > thresh, min_periods)
     neg = sustained(np.nan_to_num(z, nan=0) < -thresh, min_periods)
-    lab = {k: ("." if np.isnan(z[i]) else "+" if pos[i] else "-" if neg[i] else "0") for i, k in enumerate(keys)}
+    # months with an index value but no rolling mean yet (start of the record) count as neutral, as in the Fig. 4 script (NaN -> 0)
+    lab = {k: ("+" if pos[i] else "-" if neg[i] else "0") for i, k in enumerate(keys)}
     s = "".join(lab.get((y, m), ".") for y in range(y0, y1 + 1) for m in range(12))
     covered = [k[0] for k in keys]
     return s, [max(y0, min(covered)), min(y1, max(covered))]

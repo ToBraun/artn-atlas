@@ -11,7 +11,7 @@ Output (all little-endian, gzip-compressed)
     meta.json                 catalog label, time range, counts, file list
     tracks.u32.gz             start offset of every track in the point arrays (n_tracks + 1)
     month.u16.gz              month index of every point, (year - y0) * 12 + month - 1
-    ivt.u16.gz                mean IVT magnitude of every point, rounded (kg m-1 s-1)
+    ivt.u16.gz                mean IVT magnitude of every point times ivt_scale (meta.json), rounded
     cell_<loc>_r<res>.u16.gz  H3 cell of every point, as index into the sorted list
                               of all H3 cells at that resolution
 
@@ -68,7 +68,9 @@ def main():
 
     save("tracks.u32.gz", offsets)
     save("month.u16.gz", month_idx)
-    save("ivt.u16.gz", np.clip(np.rint(ivt), 0, 65535).astype("<u2"))
+    IVT_SCALE = 50   # store IVT in steps of 0.02 kg m-1 s-1 so class thresholds and edge means match the float catalogue
+    assert np.nanmax(ivt) * IVT_SCALE < 65535
+    save("ivt.u16.gz", np.clip(np.rint(ivt * IVT_SCALE), 0, 65535).astype("<u2"))
 
     files = {}
     for res in RESOLUTIONS:
@@ -83,7 +85,7 @@ def main():
 
     meta = dict(label=a.label, y0=y0, y1=y1, n_points=int(len(time)), n_tracks=int(len(starts)),
                 locators=list(LOCATORS), resolutions=list(RESOLUTIONS), cells=files,
-                tracks="tracks.u32.gz", month="month.u16.gz", ivt="ivt.u16.gz")
+                tracks="tracks.u32.gz", month="month.u16.gz", ivt="ivt.u16.gz", ivt_scale=IVT_SCALE)
     (out / "meta.json").write_text(json.dumps(meta, indent=1))
     print(json.dumps(meta, indent=1))
 

@@ -1,0 +1,112 @@
+{
+ "base_c2": {
+  "ref_edges": 12750,
+  "browser_edges": 12750,
+  "common": 12750,
+  "only_ref": 0,
+  "only_browser": 0,
+  "jaccard": 1.0,
+  "max_weight_diff": 0.0,
+  "ref_nodes": 4082,
+  "browser_nodes": 4082
+ },
+ "base_c2_nodes": {
+  "strength_maxabs": 0.0,
+  "divergence_maxabs": 0.0,
+  "pagerank_max_rel": 0.11157255330494147,
+  "pagerank_sum_browser": 1.0,
+  "divergence_sum": 0.0,
+  "strength_p99_per_decade": 237.4714285714286
+ },
+ "ivt_thresholds": {
+  "reference": [
+   -40.52,
+   -20.07,
+   -8.76,
+   3.54,
+   14.61,
+   35.34
+  ],
+  "browser": [
+   -40.519989013671875,
+   -20.079986572265625,
+   -8.760009765625,
+   3.53997802734375,
+   14.6199951171875,
+   35.339996337890625
+  ]
+ },
+ "ivt_classes": {
+  "edge_class_agreement": 0.9997647058823529,
+  "edge_mean_diff_maxabs": 0.007246494293212891,
+  "node_net_ivt_maxabs": 0.00321197509765625,
+  "nodes_compared": 4082
+ },
+ "ebc": {
+  "max_abs": 0.0005846815124546166,
+  "max": 0.05203257264307619,
+  "corr": 0.9999974484007316,
+  "top4pct_overlap": 1.0,
+  "seconds": 34
+ },
+ "base_h2": {
+  "ref_edges": 13478,
+  "browser_edges": 13478,
+  "common": 13478,
+  "only_ref": 0,
+  "only_browser": 0,
+  "jaccard": 1.0,
+  "max_weight_diff": 0.0,
+  "ref_nodes": 3810,
+  "browser_nodes": 3810
+ },
+ "base_h2_nodes": {
+  "strength_maxabs": 0.0,
+  "divergence_maxabs": 0.0,
+  "pagerank_max_rel": 0.22526535813214457,
+  "pagerank_sum_browser": 1.0,
+  "divergence_sum": 0.0,
+  "strength_p99_per_decade": 178.83214285714268
+ },
+ "base_c1": {
+  "ref_edges": 4086,
+  "browser_edges": 4086,
+  "common": 4086,
+  "only_ref": 0,
+  "only_browser": 0,
+  "jaccard": 1.0,
+  "max_weight_diff": 0.0,
+  "ref_nodes": 818,
+  "browser_nodes": 818
+ },
+ "base_c3": {
+  "ref_edges": 205700,
+  "browser_edges": 205700,
+  "common": 205700,
+  "only_ref": 0,
+  "only_browser": 0,
+  "jaccard": 1.0,
+  "max_weight_diff": 0.0,
+  "ref_nodes": 32178,
+  "browser_nodes": 32178
+ },
+ "eps8": {
+  "ref_edges": 22729,
+  "browser_edges": 22729,
+  "common": 22729,
+  "only_ref": 0,
+  "only_browser": 0,
+  "jaccard": 1.0,
+  "max_weight_diff": 0.0,
+  "ref_nodes": 4957,
+  "browser_nodes": 4957
+ },
+ "eps8_nodes": {
+  "strength_maxabs": 0.0,
+  "divergence_maxabs": 0.0,
+  "pagerank_max_rel": 0.4110290692058443,
+  "pagerank_sum_browser": 1.0,
+  "divergence_sum": 0.0,
+  "strength_p99_per_decade": 240.52857142857138
+ }
+}
