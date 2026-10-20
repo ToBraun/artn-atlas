@@ -331,10 +331,10 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
         <div class="row"><label for="hstep">Step</label><span class="val" id="hstep-v"></span></div>
         <input type="range" id="hstep" min="5" max="20" step="5" value="10">
       </div>
-      <div class="row"><label for="motor">Highways: top</label><span class="val" id="motor-v"></span></div>
+      <div class="row"><label for="motor">Highways: top <button class="qm" data-tip="Every edge gets its edge betweenness: the share of shortest paths between all pairs of cells that run along it, with each edge's length set to 1/weight so that frequently travelled edges are short. Highways are the top x% of edges by betweenness, the backbone that the most AR transport routes share (the top 4% in the paper). Main roads are the next tier: the edges within the top y% that are not highways. Set main roads to 0% (or below the highway share) to show highways only. All other edges are minor roads.">?</button></label><span class="val" id="motor-v"></span></div>
       <input type="range" id="motor" min="1" max="15" step="1" value="4">
       <div class="row"><label for="prim">Main roads: top</label><span class="val" id="prim-v"></span></div>
-      <input type="range" id="prim" min="5" max="40" step="1" value="15">
+      <input type="range" id="prim" min="0" max="40" step="1" value="15">
       <div class="row"><label for="minor">Show minor roads</label><input type="checkbox" id="minor" checked></div>
       <div class="row"><label for="ebcmode">Betweenness</label>
         <select id="ebcmode"><option value="auto">Auto</option><option value="exact">Exact</option><option value="fast">Fast (sampled)</option></select></div>
@@ -932,7 +932,7 @@ function drawHubs() {
 }
 
 /* Road types view */
-function roadClass(eb) { const s = Float64Array.from(eb).sort().reverse(); const at = p => s[Math.max(0, Math.floor(s.length * p / 100) - 1)]; return { m: at(S.motor), p: at(S.prim) }; }
+function roadClass(eb) { const s = Float64Array.from(eb).sort().reverse(); const at = p => s[Math.max(0, Math.floor(s.length * p / 100) - 1)]; const m = at(S.motor); return { m, p: S.prim <= S.motor ? m : at(S.prim) }; }   // main roads off when their share is not above the highways' share
 function drawHighways() {
   const P = PAL();
   if (HIST) { const n = HIST.length;
@@ -988,7 +988,7 @@ function legendIVT(title) { const t = IVTTHR, P = PAL(), C = P.ivtClass;
   <div class="ticks"><span>loss: ${num(t[0], 0)} or less</span><span>${num(t[2], 0)} to ${num(t[3], 0)}</span><span>gain: ${num(t[5], 0)} or more</span></div></div>${P.crameriIVT ? `<div class="credit">${CRAMERI}</div>` : ""}`; }
 function legendRoads() { $("legend").innerHTML = `<span class="lbl">Road types by edge betweenness</span><div class="roads">
   <i style="border-top:5px solid ${css("--motorway")};outline:1px solid ${css("--road-casing")}"></i><span>Highway: top ${S.motor}%</span>
-  <i style="border-top:3px solid ${css("--primary")};outline:1px solid ${css("--road-casing")}"></i><span>Main road: top ${S.prim}%</span>
+  ${S.prim > S.motor ? `<i style="border-top:3px solid ${css("--primary")};outline:1px solid ${css("--road-casing")}"></i><span>Main road: top ${S.prim}%</span>` : ""}
   ${S.minor ? `<i style="border-top:1px solid ${css("--minor")}"></i><span>Minor road</span>` : ""}</div>`; }
 function legendCompare() { const [a, b] = cmpLabels(); $("legend").innerHTML = `<span class="lbl">Highways and main roads compared</span><div class="roads">
   <i style="border-top:4px solid ${css("--cmpA")}"></i><span>${a} (${G.epsC} ARs threshold)</span>
@@ -1101,8 +1101,8 @@ bindRange("eps", "eps", v => v.toFixed(1) + " per decade");
 bindRange("alpha", "alpha", v => v.toFixed(2), () => { if (G) { PR = pagerank(G, S.alpha); if (GB) PRB = pagerank(GB, S.alpha); draw(); } });
 bindRange("tophubs", "tophubs", v => String(v), redraw);
 bindRange("wmax", "wmax", v => v.toFixed(1) + " px", redraw);
-bindRange("motor", "motor", v => v + "%", () => { if (HIST) changed(); else redraw(); });
-bindRange("prim", "prim", v => v + "%", redraw);
+bindRange("motor", "motor", v => v + "%", () => { $("prim-v").textContent = S.prim <= S.motor ? (S.prim ? S.prim + "% · off" : "off") : S.prim + "%"; if (HIST) changed(); else redraw(); });
+bindRange("prim", "prim", v => v <= S.motor ? (v ? v + "% · off" : "off") : v + "%", redraw);
 bindRange("minsize", "minsize", v => v + " cells", () => { if (BAS && G) { BAS = relabelBasins(G, BAS._im); draw(); } else changed(); });
 bindRange("hlen", "hlen", v => v + " years"); bindRange("hstep", "hstep", v => v + " years");
 const onSel = (id, key, recompute, isNum) => $(id).onchange = e => { S[key] = isNum ? +e.target.value : e.target.value; syncViewOpts(); if (recompute) changed(true); else draw(); };
