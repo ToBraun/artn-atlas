@@ -263,10 +263,10 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
     </fieldset>
 
     <fieldset id="stratbox">
-      <legend>AR class <button class="qm" id="strat-q" data-tip="Keep only the ARs in one of five classes of a track property. Classes are quintiles over all ARs of the catalogue with at least two time steps (only those make transport steps), so they stay the same for every time window. Lifetime counts the time steps of the whole track; mean IVT averages the AR's mean IVT over its steps. With Match edge count every class gets the same number of edges as the unfiltered network, so classes can be compared like for like.">?</button></legend>
-      <select id="strat" aria-label="AR property"><option value="">All ARs</option><option value="life">Lifetime (time steps)</option><option value="ivt">Mean IVT</option></select>
+      <legend>AR feature <button class="qm" id="strat-q" data-tip="Keep only the ARs in one of five classes of an AR feature. Classes are quintiles over all ARs of the catalogue with at least two time steps (only those make transport steps), so they stay the same for every time window. Lifetime counts the 6-hourly time steps of the whole track and is shown as their duration (steps × 6 h; the few 12-hour gaps in a track are not counted); mean IVT averages the AR's mean IVT over its steps. With Match edge count every class gets the same number of edges as the unfiltered network, so classes can be compared like for like.">?</button></legend>
+      <select id="strat" aria-label="AR feature"><option value="">All ARs</option><option value="life">Lifetime</option><option value="ivt">Mean IVT</option></select>
       <div id="classbox" hidden>
-        <input type="range" id="cls" min="0" max="4" step="1" value="0" aria-label="AR class">
+        <input type="range" id="cls" min="0" max="4" step="1" value="0" aria-label="AR feature class">
         <div class="cls5"><span>low</span><span id="cls-txt"></span><span>high</span></div>
       </div>
       <p class="warn" id="clswarn" hidden></p>
@@ -321,7 +321,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
         <select id="hwmode"><option value="roads">Road types</option><option value="ivt">IVT gain or loss</option><option value="compare">Compare A and B</option><option value="history">Highways through time</option></select></div>
       <div id="cmpbox" hidden>
         <div class="row"><label for="cmptype">Compare</label>
-          <select id="cmptype"><option value="windows">Two time windows</option><option value="seasons">DJF and JJA</option><option value="phases">Opposite regime phases</option><option value="classes">Lowest and highest AR class</option></select></div>
+          <select id="cmptype"><option value="windows">Two time windows</option><option value="seasons">DJF and JJA</option><option value="phases">Opposite regime phases</option><option value="classes">Lowest and highest AR feature class</option></select></div>
         <div class="row" id="cmpwin"><label for="c0">Window B</label>
           <span><input type="number" id="c0" value="1940"> – <input type="number" id="c1" value="1979"></span></div>
       </div>
@@ -494,9 +494,11 @@ function setupClasses() {
     TRK[key] = { v, edges, bin, count };
   }
 }
+const dur = n => { const h = 6 * n; return h < 48 ? h + " h" : (+(h / 24).toFixed(2)) + " d"; };   // lifetime: time steps × 6 h
 function classLabel(key, b) { const T = TRK && TRK[key]; if (!T) return ""; const e = T.edges;
   if (key === "life") { const lo = b ? Math.floor(e[b - 1]) + 1 : 2, hi = b < 4 ? Math.floor(e[b]) : Infinity;
-    return hi === Infinity ? `${lo}+ steps` : lo >= hi ? `${hi} step${hi === 1 ? "" : "s"}` : `${lo}–${hi} steps`; }
+    if (hi === Infinity) return `${dur(lo)} or more`; if (lo >= hi) return dur(hi);
+    const a = dur(lo), z = dur(hi); return a.slice(-1) === z.slice(-1) ? `${a.slice(0, -2)}–${z}` : `${a}–${z}`; }   // "12–18 h", "36 h–2 d"
   const f = x => Math.round(x); return b === 0 ? `≤ ${f(e[0])}` : b === 4 ? `> ${f(e[3])}` : `${f(e[b - 1])}–${f(e[b])}`; }
 function classColors() { const c = PAL().seq; return [0, 1, 2, 3, 4].map(b => c(.18 + .2 * b)); }
 function syncClassUI() { const on = !!S.strat && !!TRK; $("classbox").hidden = !on; if (!on) return;
