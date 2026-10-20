@@ -60,6 +60,10 @@ ENSO phases follow `classify_sustained_phases` in `Fig4_ARHighways_conditional.p
 
 With a season or regime filter the app by default picks the AR count threshold whose edge count is closest to the unfiltered network of the same window at ε ("Match edge count"). For ENSO over 1951–2023 this gives 3 (El Niño), 9 (neutral) and 4 (La Niña) ARs, against 3, 9 and 3 in the paper.
 
+## AR classes
+
+The AR class menu keeps only the ARs in one quintile of a track property: lifetime (number of time steps of the whole track) or mean IVT (the AR's mean IVT averaged over its steps). Quintiles are taken over all ARs of the catalogue with at least two steps, so the classes are fixed across time windows. With "Match edge count" each class network gets the edge count of the unfiltered network of the same window. A warning appears when a class network rests on fewer than 1,000 ARs, when its edges are backed by fewer than 3 ARs each, or when it reaches less than 80 % of the target edge count. Lifetime has many ties, so its classes differ in size (the class tooltip gives the count).
+
 ## Credits and licence
 
 - Method: Braun et al. (2026), Earth Syst. Dynam. 17, 695–716, https://doi.org/10.5194/esd-17-695-2026

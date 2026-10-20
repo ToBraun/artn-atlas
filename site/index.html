@@ -99,6 +99,16 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 #phase::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink); box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 11px var(--accent); }
 #phase::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
 #phase:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 11px; }
+/* AR class selector: five discrete stops, dots coloured low → high, no fill */
+#cls { -webkit-appearance: none; appearance: none; height: 22px; background: transparent; cursor: pointer; margin: 2px 0; }
+#cls::-webkit-slider-runnable-track { height: 22px; border-radius: 11px; background: var(--clstrack); }
+#cls::-moz-range-track { height: 22px; border-radius: 11px; background: var(--clstrack); }
+#cls::-moz-range-progress { background: transparent; }
+#cls::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--paper); border: 2px solid var(--ink); box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 11px var(--clsc); }
+#cls::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--clsc); border: 2px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
+#cls:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 11px; }
+.cls5 { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; font-size: 13.5px; margin-top: -4px; color: var(--muted); }
+.cls5 #cls-txt { text-align: center; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .phase3 { display: grid; grid-template-columns: repeat(3, 1fr); font-size: 13.5px; margin-top: -4px; }
 .phase3 button { font: inherit; background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 0; }
 .phase3 button:nth-child(1) { text-align: left; } .phase3 button:nth-child(2) { text-align: center; } .phase3 button:nth-child(3) { text-align: right; }
@@ -252,6 +262,16 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
       </div>
     </fieldset>
 
+    <fieldset id="stratbox">
+      <legend>AR class <button class="qm" id="strat-q" data-tip="Keep only the ARs in one of five classes of a track property. Classes are quintiles over all ARs of the catalogue with at least two time steps (only those make transport steps), so they stay the same for every time window. Lifetime counts the time steps of the whole track; mean IVT averages the AR's mean IVT over its steps. With Match edge count every class gets the same number of edges as the unfiltered network, so classes can be compared like for like.">?</button></legend>
+      <select id="strat" aria-label="AR property"><option value="">All ARs</option><option value="life">Lifetime (time steps)</option><option value="ivt">Mean IVT</option></select>
+      <div id="classbox" hidden>
+        <input type="range" id="cls" min="0" max="4" step="1" value="0" aria-label="AR class">
+        <div class="cls5"><span>low</span><span id="cls-txt"></span><span>high</span></div>
+      </div>
+      <p class="warn" id="clswarn" hidden></p>
+    </fieldset>
+
     <fieldset>
       <legend>Edges</legend>
       <div class="row"><label for="eps">Threshold ε <button class="qm" data-tip="An edge is kept if at least ε ARs per decade travel along it in the selected window. The paper uses ε = 2.">?</button></label><span class="val" id="eps-v"></span></div>
@@ -301,7 +321,7 @@ footer { grid-column: 2; border-top: 1px solid var(--rule); padding-block: 8px 1
         <select id="hwmode"><option value="roads">Road types</option><option value="ivt">IVT gain or loss</option><option value="compare">Compare A and B</option><option value="history">Highways through time</option></select></div>
       <div id="cmpbox" hidden>
         <div class="row"><label for="cmptype">Compare</label>
-          <select id="cmptype"><option value="windows">Two time windows</option><option value="seasons">DJF and JJA</option><option value="phases">Opposite regime phases</option></select></div>
+          <select id="cmptype"><option value="windows">Two time windows</option><option value="seasons">DJF and JJA</option><option value="phases">Opposite regime phases</option><option value="classes">Lowest and highest AR class</option></select></div>
         <div class="row" id="cmpwin"><label for="c0">Window B</label>
           <span><input type="number" id="c0" value="1940"> – <input type="number" id="c1" value="1979"></span></div>
       </div>
@@ -421,7 +441,7 @@ const basinColor = b => BASINPAL[(b * 7) % BASINPAL.length];
 const S = { view: "network", y0: 1940, y1: 2023, seasons: new Set(["DJF", "MAM", "JJA", "SON"]), eps: 2, thrule: "match", alpha: 0.9, loc: "centroid", res: 2,
   show: "values", b0: 1940, b1: 1979, metric: "strength", tophubs: 12, netcol: "weight", netw: "weight", wscale: "linear", wmax: 3, diffmode: false,
   hwmode: "roads", cmptype: "windows", c0: 1940, c1: 1979, motor: 4, prim: 15, minor: true, ebcmode: "auto", hlen: 20, hstep: 10,
-  minsize: 15, trials: 5, seed: 38, upstream: true, regime: "", phase: 0, selNode: -1, selBasin: -1 };
+  minsize: 15, trials: 5, seed: 38, upstream: true, regime: "", phase: 0, strat: "", cls: 0, selNode: -1, selBasin: -1 };
 const PHASECH = { "-1": "-", "0": "0", "1": "+" };
 const CATALOGS = [{ dir: "data", label: "PIKART v1.1 · ERA5 · 1940–2025" }, { dir: "data_v10", label: "PIKART v1.0 · ERA5 · 1940–2023 (paper)" },
   { dir: "data_merra2", label: "PIKART v1.0 · MERRA-2 · 1980–2018" }, { dir: "data_target", label: "tARget v4.0 · ERA5 · 1940–2023" }];
@@ -455,9 +475,37 @@ async function loadBase() {
   diffs.sort(); const q = p => { const h = p * (diffs.length - 1), i = Math.floor(h); return diffs[i] + (h - i) * ((diffs[i + 1] ?? diffs[i]) - diffs[i]); };   // linear interpolation, as numpy.nanquantile
   IVTTHR = [q(.1), q(.25), q(.4), q(.6), q(.75), q(.9)];
   trackStartYr = new Int32Array(Y1 - Y0 + 1); for (let t = 0; t < NTR; t++) trackStartYr[Math.floor(MON[OFF[t]] / 12)]++;
+  setupClasses();
   const topo = JSON.parse($("land").textContent); land = topojson.feature(topo, topo.objects.land);
   try { const rr = await fetch(DATADIR + "/regimes.json"); if (rr.ok) { REG = await rr.json(); setupRegimes(); } } catch (e) { REG = null; }
 }
+/* AR classes: quintiles of a per-track property over all tracks with >= 2 time steps (the ones that make transport steps) */
+const STRAT = { life: { name: "Lifetime", unit: "steps" }, ivt: { name: "Mean IVT", unit: "kg m⁻¹ s⁻¹" } };
+let TRK = null;
+function setupClasses() {
+  const life = new Float64Array(NTR), ivt = new Float64Array(NTR);
+  for (let t = 0; t < NTR; t++) { const a = OFF[t], b = OFF[t + 1]; life[t] = b - a; let s = 0; for (let i = a; i < b; i++) s += IVT[i]; ivt[t] = s / (b - a); }
+  TRK = {};
+  for (const [key, v] of [["life", life], ["ivt", ivt]]) {
+    const ok = []; for (let t = 0; t < NTR; t++) if (life[t] >= 2) ok.push(v[t]); ok.sort((x, y) => x - y);
+    const q = p => { const h = p * (ok.length - 1), i = Math.floor(h); return ok[i] + (h - i) * ((ok[i + 1] ?? ok[i]) - ok[i]); };
+    const edges = [q(.2), q(.4), q(.6), q(.8)], bin = new Uint8Array(NTR).fill(255), count = [0, 0, 0, 0, 0];
+    for (let t = 0; t < NTR; t++) { if (life[t] < 2) continue; let b = 0; while (b < 4 && v[t] > edges[b]) b++; bin[t] = b; count[b]++; }   // class b: edges[b-1] < v <= edges[b]
+    TRK[key] = { v, edges, bin, count };
+  }
+}
+function classLabel(key, b) { const T = TRK && TRK[key]; if (!T) return ""; const e = T.edges;
+  if (key === "life") { const lo = b ? Math.floor(e[b - 1]) + 1 : 2, hi = b < 4 ? Math.floor(e[b]) : Infinity;
+    return hi === Infinity ? `${lo}+ steps` : lo >= hi ? `${hi} step${hi === 1 ? "" : "s"}` : `${lo}–${hi} steps`; }
+  const f = x => Math.round(x); return b === 0 ? `≤ ${f(e[0])}` : b === 4 ? `> ${f(e[3])}` : `${f(e[b - 1])}–${f(e[b])}`; }
+function classColors() { const c = PAL().seq; return [0, 1, 2, 3, 4].map(b => c(.18 + .2 * b)); }
+function syncClassUI() { const on = !!S.strat && !!TRK; $("classbox").hidden = !on; if (!on) return;
+  const col = classColors(), el = $("cls"), pos = ["0", "25%", "50%", "75%", "100%"];
+  el.style.setProperty("--clstrack", col.map((c, b) => `radial-gradient(circle, ${c} 4.5px, transparent 5px) ${pos[b]} 50% / 22px 22px no-repeat`).join(", ")
+    + ", linear-gradient(var(--rule), var(--rule)) 50% 50% / calc(100% - 22px) 2px no-repeat");
+  el.style.setProperty("--clsc", col[S.cls]); el.value = S.cls;
+  const T = TRK[S.strat]; $("cls-txt").textContent = `Class ${S.cls + 1}: ${classLabel(S.strat, S.cls)}${S.strat === "ivt" ? " kg m⁻¹ s⁻¹" : ""}`;
+  $("cls-txt").title = `${T.count[S.cls].toLocaleString("en")} ARs in this class over ${Y0}–${Y1}`; }
 function setupRegimes() {
   const sel = $("regime"); while (sel.options.length > 1) sel.remove(1);
   if (!REG || !REG.indices.length) return; $("regimebox").hidden = false;
@@ -483,17 +531,20 @@ async function cellsFor(loc, res) {
 /* ---------- conditioning: which months count ---------- */
 // cond = { y0, y1, seasons:Set, regime:key|"", phases:Set }
 const curPhases = () => new Set([PHASECH[S.phase]]);
-function condA() { return { y0: S.y0, y1: S.y1, seasons: S.seasons, regime: S.regime, phases: curPhases() }; }
+function condA() { return { y0: S.y0, y1: S.y1, seasons: S.seasons, regime: S.regime, phases: curPhases(), strat: S.strat, cls: S.cls }; }
 const winCond = (c, a, b) => ({ ...c, y0: Math.max(Y0, Math.min(a, b)), y1: Math.min(Y1, Math.max(a, b)) });
 function condRef() { return winCond(condA(), S.b0, S.b1); }                 // reference window B for "Change (A − B)"
 function cmpA() { const A = condA(); if (S.cmptype === "seasons") return { ...A, seasons: new Set(["DJF"]) };   // DJF purple, JJA green, as in the Fig. 4d colour bars
-  if (S.cmptype === "phases") return { ...A, regime: S.regime || "enso", phases: new Set(["-"]) }; return A; }
+  if (S.cmptype === "phases") return { ...A, regime: S.regime || "enso", phases: new Set(["-"]) };
+  if (S.cmptype === "classes") return { ...A, strat: S.strat || "ivt", cls: 0 }; return A; }
 function cmpB() { const A = condA(); if (S.cmptype === "seasons") return { ...A, seasons: new Set(["JJA"]) };
-  if (S.cmptype === "phases") return { ...A, regime: S.regime || "enso", phases: new Set(["+"]) }; return winCond(A, S.c0, S.c1); }
+  if (S.cmptype === "phases") return { ...A, regime: S.regime || "enso", phases: new Set(["+"]) };
+  if (S.cmptype === "classes") return { ...A, strat: S.strat || "ivt", cls: 4 }; return winCond(A, S.c0, S.c1); }
 function cmpLabels() { if (S.cmptype === "seasons") return ["DJF", "JJA"];
+  if (S.cmptype === "classes") { const k = S.strat || "ivt", u = k === "ivt" ? " kg m⁻¹ s⁻¹" : ""; return [`${STRAT[k].name} class 1: ${classLabel(k, 0)}${u}`, `class 5: ${classLabel(k, 4)}${u}`]; }
   if (S.cmptype === "phases") { const ix = regimeIx(S.regime || "enso"); return ix ? [ix.neg, ix.pos] : ["negative phase", "positive phase"]; }
   return [`${S.y0}–${S.y1}`, `${Math.min(S.c0, S.c1)}–${Math.max(S.c0, S.c1)}`]; }
-const filtered = c => c.seasons.size < 4 || !!c.regime;
+const filtered = c => c.seasons.size < 4 || !!c.regime || !!c.strat;
 function monthMask(c) {
   const ok = new Uint8Array(12); for (const s of c.seasons) for (const m of SEASON[s]) ok[m] = 1;
   const lab = c.regime ? regimeIx(c.regime) : null, base = lab ? (Y0 - REG.y0) * 12 : 0;
@@ -504,14 +555,16 @@ function monthMask(c) {
   return { mask, months: n };
 }
 function condText(c) { const ix = c.regime ? regimeIx(c.regime) : null; const ph = ix ? [...c.phases].map(p => p === "+" ? ix.pos : p === "-" ? ix.neg : "neutral " + ix.name.split(" ")[0]).join(", ") : "";
-  return `${c.y0}–${c.y1}${c.seasons.size < 4 ? " · " + [...c.seasons].join(", ") : ""}${ph ? " · " + ph : ""}`; }
+  const cl = c.strat && TRK ? ` · ${STRAT[c.strat].name} class ${c.cls + 1} (${classLabel(c.strat, c.cls)})` : "";
+  return `${c.y0}–${c.y1}${c.seasons.size < 4 ? " · " + [...c.seasons].join(", ") : ""}${ph ? " · " + ph : ""}${cl}`; }
 
 /* ---------- network construction (mirrors ARnet_sub: consecutive steps → transport matrix W → threshold, no self-links) ---------- */
 const classOf = v => { let c = 0; for (const t of IVTTHR) if (v >= t) c++; return c - 3; };
 function aggregate(c) {
   const g = grid(S.res), CELL = CELLS[S.loc + "_r" + S.res], NC = g.cells.length, { mask, months } = monthMask(c);
   const agg = new Map(), outS = new Map(), inS = new Map(); let nAR = 0;
-  for (let t = 0; t < NTR; t++) { let used = false;
+  const tb = c.strat && TRK ? TRK[c.strat].bin : null;
+  for (let t = 0; t < NTR; t++) { let used = false; if (tb && tb[t] !== c.cls) continue;   // AR class filter acts on whole tracks
     for (let i = OFF[t]; i < OFF[t + 1] - 1; i++) { if (!mask[MON[i]] || !mask[MON[i + 1]]) continue; used = true;   // both time steps inside the selection, as when the scripts subset the catalogue rows
       const f = CELL[i], d = CELL[i + 1], dv = IVT[i + 1] - IVT[i];
       let o = outS.get(f); if (!o) outS.set(f, o = [0, 0]); o[0] += IVT[i + 1]; o[1]++;
@@ -725,7 +778,7 @@ async function compute() {
   computing = false; if (pending) { pending = false; compute(); }
 }
 function rememberNetwork() {   // short memory of the last networks for "only gained and lost edges"
-  const key = [S.loc, S.res, S.eps, S.thrule, [...S.seasons].sort().join(""), S.regime, S.phase].join("|");
+  const key = [S.loc, S.res, S.eps, S.thrule, [...S.seasons].sort().join(""), S.regime, S.phase, S.strat, S.cls].join("|");
   if (key !== netHistKey) { NETHIST.length = 0; netHistKey = key; }
   const last = NETHIST[NETHIST.length - 1];
   if (last && last.y0 === S.y0 && last.y1 === S.y1) return;
@@ -776,9 +829,20 @@ function setStatus() {
   const k = S.view === "highways" ? (HIST ? HIST[0].k : G.ebcK) : 0; const samp = k ? ` · betweenness sampled from ${k} sources` : "";
   st.innerHTML = HIST ? `<b>${HIST.length}</b> windows of ${S.hlen} years<span class="sub"><br>computed in ${secs}${samp}</span>` :
     `<span class="sub2"><b>${G.nAR.toLocaleString("en")}</b> ARs · <b>${G.n.toLocaleString("en")}</b> nodes · </span><b>${G.E.toLocaleString("en")}</b> edges<span class="sub"><br>computed in ${secs}${samp}</span>`;
+  classWarning();
   const sparse = G.nAR > 0 && G.n < .3 * G.visited, eh = $("epshint"); eh.hidden = !sparse;
   if (sparse) eh.textContent = `Only ${Math.round(100 * G.n / G.visited)}% of the cells ARs pass through have an edge at this threshold${S.res === 3 ? ". At res 3 the cells are small, so each cell pair is visited rarely" : ""}. Try a lower ε${S.res === 3 ? ", for example 0.3" : ""}.`;
 }
+/* too few ARs for a stratified network: the AR count behind the selection, the AR count each edge rests on, and whether the edge count could be matched */
+const MIN_ARS = 1000, MIN_EDGE_ARS = 3;
+function classWarning() { const w = $("clswarn"), nets = [G, GB].filter(g => g && g.cond && g.cond.strat);
+  const msg = [];
+  for (const g of nets) { const tag = nets.length > 1 ? (g === G ? "A: " : "B: ") : "";
+    if (g.nAR < MIN_ARS) msg.push(`${tag}only ${g.nAR.toLocaleString("en")} ARs in this class and period (fewer than ${MIN_ARS.toLocaleString("en")})`);
+    if (g.epsC < MIN_EDGE_ARS) msg.push(`${tag}edges rest on ${g.epsC === 1 ? "a single AR" : "only " + g.epsC + " ARs"} each`);
+    if (g.matched && g.target && g.E < .8 * g.target) msg.push(`${tag}${g.E.toLocaleString("en")} edges, short of the ${g.target.toLocaleString("en")} of the unfiltered network`); }
+  w.hidden = !msg.length;
+  if (msg.length) w.textContent = "Too few ARs for a robust network: " + msg.join("; ") + ". Widen the time window, use a coarser grid, or drop other filters."; }
 function showError(err) {
   const st = $("status"); st.className = "overlay status err";
   st.innerHTML = location.protocol === "file:" ?
@@ -1008,14 +1072,15 @@ function drawHist() { if (!trackStartYr) return; const r = hist.getBoundingClien
   hctx.fillStyle = css("--muted"); hctx.font = `12px ${css("--f-body")}`;
   const step = r.width < 420 ? 40 : 20; for (let y = Math.ceil(Y0 / step) * step; y <= Y1; y += step) { const x = (y - Y0) * bw + 2; if (x < r.width - 30) hctx.fillText(y, x, 11); }
   const ix = strip; const ph = ix ? " · " + (S.phase > 0 ? ix.pos : S.phase < 0 ? ix.neg : "neutral") : "";
-  $("win").innerHTML = `${S.y0}–${S.y1}<small>${S.y1 - S.y0 + 1} years · ${S.seasons.size === 4 ? "all seasons" : [...S.seasons].join(", ") || "no season"}${ph}</small>`; }
+  const cl = S.strat && TRK ? ` · ${STRAT[S.strat].name} class ${S.cls + 1}` : "";
+  $("win").innerHTML = `${S.y0}–${S.y1}<small>${S.y1 - S.y0 + 1} years · ${S.seasons.size === 4 ? "all seasons" : [...S.seasons].join(", ") || "no season"}${ph}${cl}</small>`; }
 
 /* ---------- interaction ---------- */
 let debounce; function changed(now) { drawHist(); clearTimeout(debounce); debounce = setTimeout(compute, now ? 0 : 180); }
 function syncViewOpts() { document.querySelectorAll(".viewopts").forEach(f => f.hidden = !f.dataset.for.split(" ").includes(S.view));
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
   $("cmpbox").hidden = S.hwmode !== "compare"; $("cmpwin").hidden = S.cmptype !== "windows"; $("histbox").hidden = S.hwmode !== "history"; $("refbox").hidden = S.show !== "change";
-  const ix = regimeIx(S.regime); $("phasebox").hidden = !ix;
+  syncClassUI(); const ix = regimeIx(S.regime); $("phasebox").hidden = !ix;
   if (ix) { $("ph-pos").textContent = ix.pos; $("ph-neg").textContent = ix.neg; $("regime-q").dataset.tip = `${ix.method}. Months without index values (before ${ix.coverage[0]}) are left out. Slide to pick the phase: ${ix.neg} on the left, neutral in the middle, ${ix.pos} on the right.`; }
   else $("regime-q").dataset.tip = "Choose an index to keep only the months in one of its phases.";
   document.querySelectorAll(".phase3 button").forEach(b => b.setAttribute("aria-current", String(+b.dataset.v === S.phase))); }
@@ -1024,6 +1089,8 @@ document.querySelectorAll("#seasons .chip").forEach(b => b.onclick = () => { con
   b.setAttribute("aria-pressed", String(S.seasons.has(s))); changed(); });
 function setPhase(v) { S.phase = v; $("phase").value = v; syncViewOpts(); changed(); }
 $("phase").addEventListener("input", e => setPhase(+e.target.value));
+$("strat").onchange = e => { S.strat = e.target.value; if (!S.strat) $("clswarn").hidden = true; syncViewOpts(); changed(true); };
+$("cls").addEventListener("input", e => { S.cls = +e.target.value; syncClassUI(); changed(); });
 document.querySelectorAll(".phase3 button").forEach(b => b.onclick = () => setPhase(+b.dataset.v));
 function bindRange(id, key, label, after) { const el = $(id); const set = () => { S[key] = +el.value; $(id + "-v").textContent = label(S[key]); };
   el.addEventListener("input", () => { set(); if (after) after(); else changed(); }); set(); }
@@ -1038,7 +1105,8 @@ bindRange("minsize", "minsize", v => v + " cells", () => { if (BAS && G) { BAS =
 bindRange("hlen", "hlen", v => v + " years"); bindRange("hstep", "hstep", v => v + " years");
 const onSel = (id, key, recompute, isNum) => $(id).onchange = e => { S[key] = isNum ? +e.target.value : e.target.value; syncViewOpts(); if (recompute) changed(true); else draw(); };
 onSel("metric", "metric", false); onSel("netcol", "netcol", false); onSel("netw", "netw", false); onSel("wscale", "wscale", false);
-onSel("show", "show", true); onSel("thrule", "thrule", true); onSel("hwmode", "hwmode", true); onSel("cmptype", "cmptype", true); onSel("ebcmode", "ebcmode", true);
+onSel("show", "show", true); onSel("thrule", "thrule", true); onSel("hwmode", "hwmode", true);
+$("cmptype").onchange = e => { S.cmptype = e.target.value; if (S.cmptype === "classes" && !S.strat) { S.strat = "ivt"; $("strat").value = "ivt"; } syncViewOpts(); changed(true); };   // the class comparison needs a property; show which one onSel("ebcmode", "ebcmode", true);
 onSel("regime", "regime", true); onSel("trials", "trials", true, true); onSel("seed", "seed", true, true);
 $("minor").onchange = e => { S.minor = e.target.checked; draw(); }; $("upstream").onchange = e => { S.upstream = e.target.checked; draw(); };
 $("diffmode").onchange = e => { S.diffmode = e.target.checked; draw(); };
@@ -1081,7 +1149,7 @@ canvas.addEventListener("click", ev => { const r = canvas.getBoundingClientRect(
 window.addEventListener("resize", () => { resize(); drawHist(); draw(); });
 { let lw = 0, lh = 0; new ResizeObserver(() => { const r = canvas.getBoundingClientRect(); if (Math.abs(r.width - lw) < 1 && Math.abs(r.height - lh) < 1) return; lw = r.width; lh = r.height; if (!G) return; resize(); draw(); }).observe(canvas); }   // the legend strip changes height with its content
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { drawHist(); draw(); });
-new MutationObserver(() => { drawHist(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+new MutationObserver(() => { syncClassUI(); drawHist(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
 /* ---------- boot ---------- */
 (async () => {
